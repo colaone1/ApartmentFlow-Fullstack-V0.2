@@ -8,10 +8,10 @@ let server;
 let testUser;
 
 beforeAll(async () => {
-  // Wait for mongoose to be connected
-  if (mongoose.connection.readyState !== 1) {
-    await new Promise((resolve) => mongoose.connection.once('open', resolve));
-  }
+  await mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
   // Create a test user
   testUser = await User.create({
     email: 'testuser@example.com',
