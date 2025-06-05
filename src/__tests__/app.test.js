@@ -25,7 +25,13 @@ beforeEach(async () => {
   await Apartment.deleteMany();
 });
 
-afterAll(async () => {});
+afterAll(async () => {
+  // Clean up test data
+  await User.deleteMany();
+  await Apartment.deleteMany();
+  // Close the MongoDB connection
+  await mongoose.connection.close();
+});
 
 describe('App', () => {
   it('should return 404 for unknown routes', async () => {

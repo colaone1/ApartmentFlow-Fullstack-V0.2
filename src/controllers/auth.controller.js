@@ -85,8 +85,27 @@ const getMe = async (req, res, next) => {
   }
 };
 
+// @desc    Logout user
+// @route   POST /api/auth/logout
+// @access  Public
+const logout = (req, res) => {
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Logout failed' });
+      }
+      res.clearCookie('connect.sid'); // Default cookie name for express-session
+      return res.json({ message: 'Logged out successfully' });
+    });
+  } else {
+    // For JWT, instruct client to remove token
+    return res.json({ message: 'Logged out (client should remove token)' });
+  }
+};
+
 module.exports = {
   register,
   login,
   getMe,
+  logout,
 };
