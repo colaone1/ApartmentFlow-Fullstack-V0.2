@@ -9,8 +9,11 @@ const cache = new NodeCache({ stdTTL: 600 });
 // @access  Public
 const getApartments = async (req, res, next) => {
   try {
-    // Create a cache key based on the query parameters
-    const cacheKey = JSON.stringify(req.query);
+    // Create a cache key based on the query parameters and user role
+    const cacheKey = JSON.stringify({
+      query: req.query,
+      userRole: req.user ? req.user.role : 'anonymous'
+    });
 
     // Check if the data is in the cache
     const cachedData = cache.get(cacheKey);
@@ -19,7 +22,30 @@ const getApartments = async (req, res, next) => {
     }
 
     // Build query
-    const query = {};
+    let query = {};
+
+    // Apply visibility rules based on user role
+    if (req.user) {
+      console.log('User role:', req.user.role);
+      if (req.user.role === 'admin') {
+        // Admin can see all listings
+        query = {};
+      } else if (req.user.role === 'agent') {
+        // Agent can see public listings and their own private listings
+        query.$or = [
+          { isPublic: true },
+          { owner: req.user._id }
+        ];
+      } else {
+        // Regular users can only see public listings
+        query = { isPublic: true };
+      }
+    } else {
+      // Non-authenticated users can only see public listings
+      query = { isPublic: true };
+    }
+
+    console.log('Final query:', JSON.stringify(query));
 
     // Filter by price range
     if (req.query.minPrice || req.query.maxPrice) {
@@ -57,12 +83,15 @@ const getApartments = async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const apartments = await Apartment.find(query)
-      .select('title price location bedrooms bathrooms area amenities images status owner createdAt')
+      .select('title price location bedrooms bathrooms area amenities images status owner createdAt isPublic externalUrl')
       .populate('owner', 'name email')
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 })
       .lean();
+
+    console.log('Found apartments:', apartments.length);
+    console.log('First apartment:', apartments[0] ? JSON.stringify(apartments[0]) : 'No apartments found');
 
     const total = await Apartment.countDocuments(query);
 
@@ -93,6 +122,15 @@ const getApartment = async (req, res, next) => {
       return res.status(404).json({ error: 'Apartment not found' });
     }
 
+    // Check if the apartment is public or if the user has access
+    if (!apartment.isPublic && 
+        (!req.user || 
+         (apartment.owner._id.toString() !== req.user._id.toString() && 
+          req.user.role !== 'admin' && 
+          req.user.role !== 'agent'))) {
+      return res.status(403).json({ error: 'Not authorized to view this apartment' });
+    }
+
     res.json(apartment);
   } catch (error) {
     next(error);
@@ -104,6 +142,11 @@ const getApartment = async (req, res, next) => {
 // @access  Private
 const createApartment = async (req, res, next) => {
   try {
+    // Only admins and agents can create listings
+    if (req.user.role !== 'admin' && req.user.role !== 'agent') {
+      return res.status(403).json({ error: 'Only admins and agents can create listings' });
+    }
+
     const apartment = await Apartment.create({
       ...req.body,
       owner: req.user._id,
@@ -126,9 +169,14 @@ const updateApartment = async (req, res, next) => {
       return res.status(404).json({ error: 'Apartment not found' });
     }
 
-    // Check ownership
+    // Check ownership and role
     if (apartment.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Not authorized to update this apartment' });
+    }
+
+    // Only admins can change isPublic status
+    if (req.body.isPublic !== undefined && req.user.role !== 'admin') {
+      delete req.body.isPublic;
     }
 
     apartment = await Apartment.findByIdAndUpdate(req.params.id, req.body, {
@@ -153,7 +201,7 @@ const deleteApartment = async (req, res, next) => {
       return res.status(404).json({ error: 'Apartment not found' });
     }
 
-    // Check ownership
+    // Check ownership and role
     if (apartment.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Not authorized to delete this apartment' });
     }

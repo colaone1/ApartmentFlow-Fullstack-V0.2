@@ -16,9 +16,11 @@ const protect = async (req, res, next) => {
     try {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log('Decoded token:', decoded);
 
       // Get user from token
       req.user = await User.findById(decoded.id).select('-password');
+      console.log('Found user:', req.user ? { id: req.user._id, role: req.user.role } : 'No user found');
 
       if (!req.user) {
         return res.status(401).json({ error: 'User not found' });
@@ -26,6 +28,7 @@ const protect = async (req, res, next) => {
 
       next();
     } catch (error) {
+      console.error('Token verification error:', error);
       return res.status(401).json({ error: 'Not authorized to access this route' });
     }
   } catch (error) {
