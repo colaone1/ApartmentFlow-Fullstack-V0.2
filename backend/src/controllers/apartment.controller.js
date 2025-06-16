@@ -1,10 +1,23 @@
 const Apartment = require('../models/apartment.model');
+const NodeCache = require('node-cache');
+
+// Initialize cache with a standard TTL of 10 minutes
+const cache = new NodeCache({ stdTTL: 600 });
 
 // @desc    Get all apartments
 // @route   GET /api/apartments
 // @access  Public
 const getApartments = async (req, res, next) => {
   try {
+    // Create a cache key based on the query parameters
+    const cacheKey = JSON.stringify(req.query);
+
+    // Check if the data is in the cache
+    const cachedData = cache.get(cacheKey);
+    if (cachedData) {
+      return res.json(cachedData);
+    }
+
     // Build query
     const query = {};
 
@@ -51,12 +64,17 @@ const getApartments = async (req, res, next) => {
 
     const total = await Apartment.countDocuments(query);
 
-    res.json({
+    const response = {
       apartments,
       page,
       pages: Math.ceil(total / limit),
       total,
-    });
+    };
+
+    // Store the response in the cache
+    cache.set(cacheKey, response);
+
+    res.json(response);
   } catch (error) {
     next(error);
   }
