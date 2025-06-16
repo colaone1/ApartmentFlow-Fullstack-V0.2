@@ -57,10 +57,12 @@ const getApartments = async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const apartments = await Apartment.find(query)
+      .select('title price location bedrooms bathrooms area amenities images status owner createdAt')
       .populate('owner', 'name email')
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     const total = await Apartment.countDocuments(query);
 
