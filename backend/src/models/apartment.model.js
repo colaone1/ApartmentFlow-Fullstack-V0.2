@@ -78,6 +78,11 @@ const apartmentSchema = new mongoose.Schema(
 // Create geospatial index for location queries
 apartmentSchema.index({ location: '2dsphere' });
 
+// Add indexes for the title, price, and status fields
+apartmentSchema.index({ title: 1 });
+apartmentSchema.index({ price: 1 });
+apartmentSchema.index({ status: 1 });
+
 const Apartment = mongoose.model('Apartment', apartmentSchema);
 
 module.exports = Apartment;
