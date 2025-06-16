@@ -1,5 +1,6 @@
 const User = require('../models/user.model');
 const Apartment = require('../models/apartment.model');
+const bcrypt = require('bcryptjs');
 
 // @desc    Get user profile
 // @route   GET /api/users/profile
@@ -18,7 +19,7 @@ const getProfile = async (req, res, next) => {
 // @access  Private
 const updateProfile = async (req, res, next) => {
   try {
-    const { name, email, phone, bio, profileImage } = req.body;
+    const { name, email, phone, bio, profileImage, password } = req.body;
 
     // Build update object
     const updateFields = {};
@@ -27,6 +28,10 @@ const updateProfile = async (req, res, next) => {
     if (phone) updateFields.phone = phone;
     if (bio) updateFields.bio = bio;
     if (profileImage) updateFields.profileImage = profileImage;
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      updateFields.password = await bcrypt.hash(password, salt);
+    }
 
     const user = await User.findByIdAndUpdate(
       req.user._id,
