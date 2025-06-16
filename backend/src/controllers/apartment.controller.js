@@ -7,107 +7,80 @@ const cache = new NodeCache({ stdTTL: 600 });
 // @desc    Get all apartments
 // @route   GET /api/apartments
 // @access  Public
-const getApartments = async (req, res, next) => {
+const getApartments = async (req, res) => {
   try {
-    // Create a cache key based on the query parameters and user role
-    const cacheKey = JSON.stringify({
-      query: req.query,
-      userRole: req.user ? req.user.role : 'anonymous'
-    });
-
-    // Check if the data is in the cache
-    const cachedData = cache.get(cacheKey);
-    if (cachedData) {
-      return res.json(cachedData);
-    }
-
-    // Build query
+    // Build query based on user role and authentication
     let query = {};
-
-    // Apply visibility rules based on user role
+    
     if (req.user) {
-      console.log('User role:', req.user.role);
+      console.log('Authenticated user query:', { role: req.user.role, userId: req.user.id });
+      
       if (req.user.role === 'admin') {
-        // Admin can see all listings
+        // Admin sees all listings
         query = {};
       } else if (req.user.role === 'agent') {
-        // Agent can see public listings and their own private listings
-        query.$or = [
-          { isPublic: true },
-          { owner: req.user._id }
-        ];
+        // Agent sees public listings and their own private listings
+        query = {
+          $or: [
+            { isPublic: true },
+            { owner: req.user.id }
+          ]
+        };
       } else {
-        // Regular users can only see public listings
+        // Regular users see only public listings
         query = { isPublic: true };
       }
     } else {
-      // Non-authenticated users can only see public listings
+      // Unauthenticated users see only public listings
+      console.log('Anonymous user query:', { isPublic: true });
       query = { isPublic: true };
+    }
+
+    // Add additional filters from query params
+    if (req.query.price) {
+      query.price = { $lte: Number(req.query.price) };
+    }
+    if (req.query.bedrooms) {
+      query.bedrooms = { $gte: Number(req.query.bedrooms) };
+    }
+    if (req.query.status) {
+      query.status = req.query.status;
+    }
+    if (req.query.location) {
+      query['location.address.city'] = new RegExp(req.query.location, 'i');
     }
 
     console.log('Final query:', JSON.stringify(query));
 
-    // Filter by price range
-    if (req.query.minPrice || req.query.maxPrice) {
-      query.price = {};
-      if (req.query.minPrice) query.price.$gte = Number(req.query.minPrice);
-      if (req.query.maxPrice) query.price.$lte = Number(req.query.maxPrice);
-    }
-
-    // Filter by bedrooms
-    if (req.query.bedrooms) {
-      query.bedrooms = Number(req.query.bedrooms);
-    }
-
-    // Filter by status
-    if (req.query.status) {
-      query.status = req.query.status;
-    }
-
-    // Search by location if coordinates provided
-    if (req.query.lat && req.query.lng) {
-      query.location = {
-        $near: {
-          $geometry: {
-            type: 'Point',
-            coordinates: [Number(req.query.lng), Number(req.query.lat)],
-          },
-          $maxDistance: req.query.radius ? Number(req.query.radius) * 1000 : 10000, // Default 10km
-        },
-      };
-    }
-
     // Execute query with pagination
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
     const skip = (page - 1) * limit;
 
     const apartments = await Apartment.find(query)
-      .select('title price location bedrooms bathrooms area amenities images status owner createdAt isPublic externalUrl')
+      .select('title price location bedrooms bathrooms area amenities images owner status isPublic createdAt')
       .populate('owner', 'name email')
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 })
-      .lean();
-
-    console.log('Found apartments:', apartments.length);
-    console.log('First apartment:', apartments[0] ? JSON.stringify(apartments[0]) : 'No apartments found');
+      .sort({ createdAt: -1 });
 
     const total = await Apartment.countDocuments(query);
+    const pages = Math.ceil(total / limit);
 
-    const response = {
+    console.log('Found apartments:', apartments.length);
+    if (apartments.length > 0) {
+      console.log('First apartment:', JSON.stringify(apartments[0]));
+    }
+
+    res.json({
       apartments,
       page,
-      pages: Math.ceil(total / limit),
-      total,
-    };
-
-    // Store the response in the cache
-    cache.set(cacheKey, response);
-
-    res.json(response);
+      pages,
+      total
+    });
   } catch (error) {
-    next(error);
+    console.error('Error in getApartments:', error);
+    res.status(500).json({ message: 'Error fetching apartments', error: error.message });
   }
 };
 
@@ -161,32 +134,39 @@ const createApartment = async (req, res, next) => {
 // @desc    Update apartment
 // @route   PUT /api/apartments/:id
 // @access  Private
-const updateApartment = async (req, res, next) => {
+const updateApartment = async (req, res) => {
   try {
-    let apartment = await Apartment.findById(req.params.id);
-
+    const apartment = await Apartment.findById(req.params.id);
+    
     if (!apartment) {
       return res.status(404).json({ error: 'Apartment not found' });
     }
 
-    // Check ownership and role
-    if (apartment.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    // Check ownership or admin status
+    if (apartment.owner.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Not authorized to update this apartment' });
     }
 
-    // Only admins can change isPublic status
+    // Only admin can change isPublic status
     if (req.body.isPublic !== undefined && req.user.role !== 'admin') {
-      delete req.body.isPublic;
+      return res.status(403).json({ error: 'Only admins can change the public status of listings' });
     }
 
-    apartment = await Apartment.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    // Update apartment
+    const updatedApartment = await Apartment.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true, runValidators: true }
+    ).populate('owner', 'name email');
 
-    res.json(apartment);
+    if (!updatedApartment) {
+      return res.status(404).json({ error: 'Apartment not found' });
+    }
+
+    res.json(updatedApartment);
   } catch (error) {
-    next(error);
+    console.error('Error in updateApartment:', error);
+    res.status(500).json({ error: 'Error updating apartment', details: error.message });
   }
 };
 

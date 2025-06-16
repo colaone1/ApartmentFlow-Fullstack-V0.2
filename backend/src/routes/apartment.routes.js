@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const { protect, authorize } = require('../middleware/auth.middleware');
+const { validateApartmentQuery } = require('../middleware/validation.middleware');
 const {
   getApartments,
   getApartment,
@@ -7,15 +9,16 @@ const {
   updateApartment,
   deleteApartment,
 } = require('../controllers/apartment.controller');
-const { protect, authorize } = require('../middleware/auth.middleware');
-const { validateApartment, validateApartmentQuery, validateObjectId } = require('../middleware/validation.middleware');
 
-// Public routes
-router.get('/', validateApartmentQuery, getApartments);
-router.get('/:id', validateObjectId, getApartment);
+// Public routes - accessible without authentication
+router.get('/public', validateApartmentQuery, getApartments); // Public listings only
 
-// Protected routes
-router.use(protect);
+// Protected routes - require authentication
+router.get('/', protect, validateApartmentQuery, getApartments); // All listings based on role
+router.get('/:id', protect, getApartment);
+router.post('/', protect, createApartment);
+router.put('/:id', protect, updateApartment);
+router.delete('/:id', protect, deleteApartment);
 
 /**
  * @swagger
@@ -144,10 +147,5 @@ router.use(protect);
  *                   items:
  *                     $ref: '#/components/schemas/Apartment'
  */
-
-// Agent and Admin routes
-router.post('/', authorize('admin', 'agent'), validateApartment, createApartment);
-router.put('/:id', authorize('admin', 'agent'), validateObjectId, validateApartment, updateApartment);
-router.delete('/:id', authorize('admin', 'agent'), validateObjectId, deleteApartment);
 
 module.exports = router;
