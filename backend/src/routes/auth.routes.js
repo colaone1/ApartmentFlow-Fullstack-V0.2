@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { register, login, getMe, logout } = require('../controllers/auth.controller');
 const { protect } = require('../middleware/auth.middleware');
+const { body } = require('express-validator');
 
 /**
  * @swagger
@@ -63,7 +64,11 @@ const { protect } = require('../middleware/auth.middleware');
  *       409:
  *         description: Email already exists
  */
-router.post('/register', register);
+router.post('/register', [
+  body('name').isString().trim().notEmpty().withMessage('Name is required'),
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+], register);
 
 /**
  * @swagger
@@ -97,7 +102,10 @@ router.post('/register', register);
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', login);
+router.post('/login', [
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+], login);
 
 /**
  * @swagger

@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
+const { validationResult } = require('express-validator');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -12,6 +13,12 @@ const generateToken = (id) => {
 // @route   POST /api/auth/register
 // @access  Public
 const register = async (req, res, next) => {
+  console.log('DEBUG: Entered register controller, body:', req.body);
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    console.log('DEBUG: express-validator errors:', errors.array());
+    return res.status(400).json({ errors: errors.array().map(e => e.msg) });
+  }
   try {
     const { name, email, password } = req.body;
 
@@ -38,6 +45,11 @@ const register = async (req, res, next) => {
       });
     }
   } catch (error) {
+    // Handle Mongoose validation errors in a consistent format
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return res.status(400).json({ errors: messages });
+    }
     next(error);
   }
 };
@@ -46,6 +58,10 @@ const register = async (req, res, next) => {
 // @route   POST /api/auth/login
 // @access  Public
 const login = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array().map(e => e.msg) });
+  }
   try {
     const { email, password } = req.body;
 
