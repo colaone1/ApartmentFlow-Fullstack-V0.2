@@ -33,10 +33,7 @@ beforeAll(async () => {
   const uri = mongod.getUri();
 
   // Connect to the in-memory database
-  await mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
+  await mongoose.connect(uri);
 
   // Wait for the connection to be established
   await new Promise((resolve) => {

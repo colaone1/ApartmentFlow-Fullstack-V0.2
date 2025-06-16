@@ -28,10 +28,7 @@ function error(status, msg) {
 // Connect to MongoDB only if not in test environment
 if (process.env.NODE_ENV !== 'test') {
   mongoose
-    .connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    })
+    .connect(process.env.MONGODB_URI)
     .then(() => {
       console.log('Connected to MongoDB');
     })
