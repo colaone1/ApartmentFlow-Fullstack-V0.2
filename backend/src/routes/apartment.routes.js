@@ -8,6 +8,14 @@ const {
   deleteApartment,
 } = require('../controllers/apartment.controller');
 const { protect, authorize } = require('../middleware/auth.middleware');
+const { validateApartment, validateApartmentQuery, validateObjectId } = require('../middleware/validation.middleware');
+
+// Public routes
+router.get('/', validateApartmentQuery, getApartments);
+router.get('/:id', validateObjectId, getApartment);
+
+// Protected routes
+router.use(protect);
 
 /**
  * @swagger
@@ -136,148 +144,10 @@ const { protect, authorize } = require('../middleware/auth.middleware');
  *                   items:
  *                     $ref: '#/components/schemas/Apartment'
  */
-router.get('/', getApartments);
 
-/**
- * @swagger
- * /api/apartments/{id}:
- *   get:
- *     summary: Get a single apartment by ID
- *     tags: [Apartments]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Apartment ID
- *     responses:
- *       200:
- *         description: Apartment details
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   $ref: '#/components/schemas/Apartment'
- *       404:
- *         description: Apartment not found
- */
-router.get('/:id', getApartment);
-
-// Protected routes
-router.use(protect);
-
-/**
- * @swagger
- * /api/apartments:
- *   post:
- *     summary: Create a new apartment listing
- *     tags: [Apartments]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Apartment'
- *     responses:
- *       201:
- *         description: Apartment created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   $ref: '#/components/schemas/Apartment'
- *       400:
- *         description: Invalid input data
- *       401:
- *         description: Not authenticated
- */
-router.post('/', createApartment);
-
-/**
- * @swagger
- * /api/apartments/{id}:
- *   put:
- *     summary: Update an apartment listing
- *     tags: [Apartments]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Apartment ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Apartment'
- *     responses:
- *       200:
- *         description: Apartment updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   $ref: '#/components/schemas/Apartment'
- *       400:
- *         description: Invalid input data
- *       401:
- *         description: Not authenticated
- *       404:
- *         description: Apartment not found
- */
-router.put('/:id', updateApartment);
-
-/**
- * @swagger
- * /api/apartments/{id}:
- *   delete:
- *     summary: Delete an apartment listing
- *     tags: [Apartments]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Apartment ID
- *     responses:
- *       200:
- *         description: Apartment deleted successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: object
- *       401:
- *         description: Not authenticated
- *       404:
- *         description: Apartment not found
- */
-router.delete('/:id', deleteApartment);
+// Agent and Admin routes
+router.post('/', authorize('admin', 'agent'), validateApartment, createApartment);
+router.put('/:id', authorize('admin', 'agent'), validateObjectId, validateApartment, updateApartment);
+router.delete('/:id', authorize('admin', 'agent'), validateObjectId, deleteApartment);
 
 module.exports = router;
