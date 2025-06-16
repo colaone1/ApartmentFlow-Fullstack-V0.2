@@ -32,7 +32,8 @@
     "husky": "^9.1.7",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.15.1",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "node-cache": "^5.1.2"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.27.2",

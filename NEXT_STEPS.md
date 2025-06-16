@@ -2,7 +2,7 @@
 
 ## Independent Tasks (Can be done now)
 1. **Performance Optimizations**
-   - [ ] Add database indexes for frequently queried fields
+   - [x] Add database indexes for frequently queried fields
    - [ ] Implement basic caching for apartment listings
    - [ ] Optimize MongoDB queries
    - [ ] Add pagination to all list endpoints
@@ -47,7 +47,6 @@
 
 ## Immediate Focus (Next 2-3 Days)
 1. **Performance**
-   - Add database indexes
    - Implement basic caching
    - Optimize queries
 
