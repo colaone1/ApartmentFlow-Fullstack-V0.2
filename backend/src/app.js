@@ -77,11 +77,15 @@ app.use('/api/apartments', apartmentWriteLimiter); // Stricter limits for apartm
 app.use('/api/', apiLimiter); // General rate limit for all other routes
 
 // Swagger Documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
-  explorer: true,
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: "Apartment Flow API Documentation"
-}));
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpecs, {
+    explorer: true,
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'Apartment Flow API Documentation',
+  })
+);
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
@@ -106,7 +110,7 @@ app.use(function (err, req, res, next) {
   if (err.name === 'ValidationError') {
     return res.status(400).json({
       error: 'Validation Error',
-      details: Object.values(err.errors).map(e => e.message)
+      details: Object.values(err.errors).map((e) => e.message),
     });
   }
 
@@ -114,7 +118,7 @@ app.use(function (err, req, res, next) {
   if (err.name === 'CastError') {
     return res.status(400).json({
       error: 'Invalid ID format',
-      details: err.message
+      details: err.message,
     });
   }
 
@@ -122,7 +126,7 @@ app.use(function (err, req, res, next) {
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({
       error: 'Invalid token',
-      details: 'Please log in again'
+      details: 'Please log in again',
     });
   }
 
@@ -130,14 +134,14 @@ app.use(function (err, req, res, next) {
   if (err.name === 'TokenExpiredError') {
     return res.status(401).json({
       error: 'Token expired',
-      details: 'Please log in again'
+      details: 'Please log in again',
     });
   }
 
   // Default error
   res.status(err.status || 500).json({
     error: err.message || 'Internal Server Error',
-    details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    details: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   });
 });
 
@@ -156,3 +160,4 @@ if (require.main === module) {
 }
 
 module.exports = app;
+// test
