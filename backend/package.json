@@ -13,10 +13,12 @@
     "prepare": "husky install"
   },
   "lint-staged": {
-    "*.js": [
-      "eslint --fix",
-      "prettier --write"
-    ]
+    "src/**/*.{js,jsx,ts,tsx}": [
+      "eslint --fix --ignore-path .eslintignore",
+      "prettier --write --ignore-path .prettierignore"
+    ],
+    "!mongodb-optimize.js": "echo 'Skipping mongodb-optimize.js'",
+    "!**/mongodb-optimize.js": "echo 'Skipping mongodb-optimize.js'"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -28,6 +30,7 @@
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.0.3",
     "morgan": "^1.10.0",
+    "node-cache": "^5.1.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },

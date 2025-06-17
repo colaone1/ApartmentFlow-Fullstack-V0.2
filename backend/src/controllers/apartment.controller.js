@@ -6,46 +6,24 @@ const cache = new NodeCache({ stdTTL: 600 });
 
 // Query builder for apartment filters
 const buildApartmentQuery = (req) => {
-  const query = {};
-  
   // Handle user role-based access
   if (req.user) {
     if (req.user.role === 'admin') {
       // Admin sees all listings
-      Object.assign(query, {});
+      return {};
     } else if (req.user.role === 'agent') {
       // Agent sees public listings and their own private listings
-      Object.assign(query, {
-        $or: [
-          { isPublic: true },
-          { owner: req.user.id }
-        ]
-      });
+      return {
+        $or: [{ isPublic: true }, { owner: req.user._id }],
+      };
     } else {
       // Regular users see only public listings
-      Object.assign(query, { isPublic: true });
+      return { isPublic: true };
     }
   } else {
     // Unauthenticated users see only public listings
-    Object.assign(query, { isPublic: true });
+    return { isPublic: true };
   }
-
-  // Add filter conditions
-  const filters = {
-    price: (val) => ({ price: { $lte: Number(val) } }),
-    bedrooms: (val) => ({ bedrooms: { $gte: Number(val) } }),
-    status: (val) => ({ status: val }),
-    location: (val) => ({ 'location.address.city': new RegExp(val, 'i') })
-  };
-
-  // Apply filters from query params
-  Object.entries(req.query).forEach(([key, value]) => {
-    if (filters[key]) {
-      Object.assign(query, filters[key](value));
-    }
-  });
-
-  return query;
 };
 
 // @desc    Get all apartments
@@ -54,7 +32,6 @@ const buildApartmentQuery = (req) => {
 const getApartments = async (req, res) => {
   try {
     const query = buildApartmentQuery(req);
-    console.log('Final query:', JSON.stringify(query));
 
     // Execute query with pagination
     const page = parseInt(req.query.page, 10) || 1;
@@ -62,7 +39,9 @@ const getApartments = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const apartments = await Apartment.find(query)
-      .select('title price location bedrooms bathrooms area amenities images owner status isPublic createdAt')
+      .select(
+        'title price location bedrooms bathrooms area amenities images owner status isPublic createdAt'
+      )
       .populate('owner', 'name email')
       .skip(skip)
       .limit(limit)
@@ -71,20 +50,15 @@ const getApartments = async (req, res) => {
     const total = await Apartment.countDocuments(query);
     const pages = Math.ceil(total / limit);
 
-    console.log('Found apartments:', apartments.length);
-    if (apartments.length > 0) {
-      console.log('First apartment:', JSON.stringify(apartments[0]));
-    }
-
-    res.json({
+    return res.json({
       apartments,
       page,
       pages,
-      total
+      total,
     });
   } catch (error) {
     console.error('Error in getApartments:', error);
-    res.status(500).json({ message: 'Error fetching apartments', error: error.message });
+    return res.status(500).json({ message: 'Error fetching apartments', error: error.message });
   }
 };
 
@@ -100,17 +74,19 @@ const getApartment = async (req, res, next) => {
     }
 
     // Check if the apartment is public or if the user has access
-    if (!apartment.isPublic && 
-        (!req.user || 
-         (apartment.owner._id.toString() !== req.user._id.toString() && 
-          req.user.role !== 'admin' && 
-          req.user.role !== 'agent'))) {
+    if (
+      !apartment.isPublic &&
+      (!req.user ||
+        (apartment.owner._id.toString() !== req.user._id.toString() &&
+          req.user.role !== 'admin' &&
+          req.user.role !== 'agent'))
+    ) {
       return res.status(403).json({ error: 'Not authorized to view this apartment' });
     }
 
-    res.json(apartment);
+    return res.json(apartment);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -119,7 +95,7 @@ const getApartment = async (req, res, next) => {
 // @access  Private
 const createApartment = async (req, res, next) => {
   try {
-    // Only admins and agents can create listings
+    // Only admin and agent can create listings
     if (req.user.role !== 'admin' && req.user.role !== 'agent') {
       return res.status(403).json({ error: 'Only admins and agents can create listings' });
     }
@@ -129,9 +105,13 @@ const createApartment = async (req, res, next) => {
       owner: req.user._id,
     });
 
-    res.status(201).json(apartment);
+    const populatedApartment = await Apartment.findById(apartment._id).populate(
+      'owner',
+      'name email'
+    );
+    return res.status(201).json(populatedApartment);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -141,19 +121,21 @@ const createApartment = async (req, res, next) => {
 const updateApartment = async (req, res) => {
   try {
     const apartment = await Apartment.findById(req.params.id);
-    
+
     if (!apartment) {
       return res.status(404).json({ error: 'Apartment not found' });
     }
 
     // Check ownership or admin status
-    if (apartment.owner.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (apartment.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Not authorized to update this apartment' });
     }
 
-    // Only admin can change isPublic status
+    // Check for isPublic status change
     if (req.body.isPublic !== undefined && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can change the public status of listings' });
+      return res
+        .status(403)
+        .json({ error: 'Only admins can change the public status of listings' });
     }
 
     // Update apartment
@@ -167,10 +149,15 @@ const updateApartment = async (req, res) => {
       return res.status(404).json({ error: 'Apartment not found' });
     }
 
-    res.json(updatedApartment);
+    return res.json(updatedApartment);
   } catch (error) {
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ error: 'Validation error', details: error.message });
+    }
+    // Handle other errors
     console.error('Error in updateApartment:', error);
-    res.status(500).json({ error: 'Error updating apartment', details: error.message });
+    return res.status(500).json({ error: 'Error updating apartment', details: error.message });
   }
 };
 
@@ -192,9 +179,9 @@ const deleteApartment = async (req, res, next) => {
 
     await apartment.deleteOne();
 
-    res.json({ message: 'Apartment removed' });
+    return res.json({ message: 'Apartment removed' });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 

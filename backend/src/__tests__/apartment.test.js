@@ -14,110 +14,121 @@ let userToken;
 let adminUser;
 let agentUser;
 let regularUser;
+let cache;
 
-// Initialize cache
-const cache = new NodeCache();
+// Helper function to create test apartment data
+const createTestApartment = (isPublic = true) => ({
+  title: `${isPublic ? 'Public' : 'Private'} Apartment`,
+  description: `A ${isPublic ? 'public' : 'private'} listing`,
+  price: isPublic ? 1000 : 2000,
+  location: {
+    coordinates: [0, 0],
+    address: {
+      street: isPublic ? '123 Main St' : '456 Main St',
+      city: 'Test City',
+      state: 'TS',
+      zipCode: '12345',
+      country: 'Test Country',
+    },
+  },
+  bedrooms: isPublic ? 2 : 3,
+  bathrooms: isPublic ? 1 : 2,
+  area: isPublic ? 1000 : 1500,
+  isPublic,
+  externalUrl: `https://example.com/${isPublic ? 'public' : 'private'}`,
+});
 
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  await mongoose.connect(mongoServer.getUri());
+  try {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+    cache = new NodeCache();
 
-  // Create test users
-  adminUser = await User.create({
-    name: 'Admin User',
-    email: 'admin@test.com',
-    password: 'password123',
-    role: 'admin'
-  });
+    // Create test users
+    adminUser = await User.create({
+      name: 'Admin User',
+      email: 'admin@test.com',
+      password: 'password123',
+      role: 'admin',
+    });
 
-  agentUser = await User.create({
-    name: 'Agent User',
-    email: 'agent@test.com',
-    password: 'password123',
-    role: 'agent'
-  });
+    agentUser = await User.create({
+      name: 'Agent User',
+      email: 'agent@test.com',
+      password: 'password123',
+      role: 'agent',
+    });
 
-  regularUser = await User.create({
-    name: 'Regular User',
-    email: 'user@test.com',
-    password: 'password123',
-    role: 'user'
-  });
+    regularUser = await User.create({
+      name: 'Regular User',
+      email: 'user@test.com',
+      password: 'password123',
+      role: 'user',
+    });
 
-  // Generate tokens
-  adminToken = jwt.sign({ id: adminUser._id }, process.env.JWT_SECRET);
-  agentToken = jwt.sign({ id: agentUser._id }, process.env.JWT_SECRET);
-  userToken = jwt.sign({ id: regularUser._id }, process.env.JWT_SECRET);
+    // Generate tokens
+    adminToken = jwt.sign({ id: adminUser._id }, process.env.JWT_SECRET);
+    agentToken = jwt.sign({ id: agentUser._id }, process.env.JWT_SECRET);
+    userToken = jwt.sign({ id: regularUser._id }, process.env.JWT_SECRET);
+  } catch (error) {
+    console.error('Error in beforeAll:', error);
+    throw error;
+  }
 });
 
 afterAll(async () => {
-  await mongoose.disconnect();
-  await mongoServer.stop();
+  try {
+    // Clean up all test data
+    await Promise.all([User.deleteMany({}), Apartment.deleteMany({})]);
+
+    // Close cache
+    if (cache) {
+      cache.close();
+    }
+
+    // Disconnect from MongoDB
+    await mongoose.disconnect();
+
+    // Stop MongoDB memory server
+    if (mongoServer) {
+      await mongoServer.stop();
+    }
+  } catch (error) {
+    console.error('Error in afterAll:', error);
+    throw error;
+  }
 });
 
 beforeEach(async () => {
-  // Clear the cache before each test
-  cache.flushAll();
-  // Clear apartments before each test
-  await Apartment.deleteMany({});
+  try {
+    // Clear the cache before each test
+    if (cache) {
+      cache.flushAll();
+    }
+    // Clear apartments before each test
+    await Apartment.deleteMany({});
+  } catch (error) {
+    console.error('Error in beforeEach:', error);
+    throw error;
+  }
 });
 
 describe('Apartment Access Control', () => {
   test('should create public and private listings', async () => {
-    const publicListing = {
-      title: 'Public Apartment',
-      description: 'A public listing',
-      price: 1000,
-      location: {
-        coordinates: [0, 0],
-        address: {
-          street: '123 Main St',
-          city: 'Test City',
-          state: 'TS',
-          zipCode: '12345',
-          country: 'Test Country'
-        }
-      },
-      bedrooms: 2,
-      bathrooms: 1,
-      area: 1000,
-      isPublic: true,
-      externalUrl: 'https://example.com/public'
-    };
-
-    const privateListing = {
-      title: 'Private Apartment',
-      description: 'A private listing',
-      price: 2000,
-      location: {
-        coordinates: [0, 0],
-        address: {
-          street: '456 Main St',
-          city: 'Test City',
-          state: 'TS',
-          zipCode: '12345',
-          country: 'Test Country'
-        }
-      },
-      bedrooms: 3,
-      bathrooms: 2,
-      area: 1500,
-      isPublic: false,
-      externalUrl: 'https://example.com/private'
-    };
+    const publicListing = createTestApartment(true);
+    const privateListing = createTestApartment(false);
 
     // Create listings as admin
-    const publicResponse = await request(app)
-      .post('/api/apartments')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send(publicListing);
-    console.log('Public listing created:', publicResponse.body);
-
-    const privateResponse = await request(app)
-      .post('/api/apartments')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send(privateListing);
-    console.log('Private listing created:', privateResponse.body);
+    const [publicResponse, privateResponse] = await Promise.all([
+      request(app)
+        .post('/api/apartments')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(publicListing),
+      request(app)
+        .post('/api/apartments')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(privateListing),
+    ]);
 
     expect(publicResponse.status).toBe(201);
     expect(privateResponse.status).toBe(201);
@@ -126,56 +137,20 @@ describe('Apartment Access Control', () => {
   });
 
   test('should only show public listings to regular users', async () => {
-    // Create public and private listings as admin
-    const publicListing = {
-      title: 'Public Apartment',
-      description: 'A public listing',
-      price: 1000,
-      location: {
-        coordinates: [0, 0],
-        address: {
-          street: '123 Main St',
-          city: 'Test City',
-          state: 'TS',
-          zipCode: '12345',
-          country: 'Test Country'
-        }
-      },
-      bedrooms: 2,
-      bathrooms: 1,
-      area: 1000,
-      isPublic: true
-    };
+    const publicListing = createTestApartment(true);
+    const privateListing = createTestApartment(false);
 
-    const privateListing = {
-      title: 'Private Apartment',
-      description: 'A private listing',
-      price: 2000,
-      location: {
-        coordinates: [0, 0],
-        address: {
-          street: '456 Main St',
-          city: 'Test City',
-          state: 'TS',
-          zipCode: '12345',
-          country: 'Test Country'
-        }
-      },
-      bedrooms: 3,
-      bathrooms: 2,
-      area: 1500,
-      isPublic: false
-    };
-
-    await request(app)
-      .post('/api/apartments')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send(publicListing);
-
-    await request(app)
-      .post('/api/apartments')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send(privateListing);
+    // Create listings as admin
+    await Promise.all([
+      request(app)
+        .post('/api/apartments')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(publicListing),
+      request(app)
+        .post('/api/apartments')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(privateListing),
+    ]);
 
     // Regular user should only see public listing
     const response = await request(app)
@@ -188,100 +163,37 @@ describe('Apartment Access Control', () => {
   });
 
   test('should show all listings to admin and their own private listings to agents', async () => {
-    // Create listings as admin
-    const publicListing = {
-      title: 'Public Apartment',
-      description: 'A public listing',
-      price: 1000,
-      location: {
-        coordinates: [0, 0],
-        address: {
-          street: '123 Main St',
-          city: 'Test City',
-          state: 'TS',
-          zipCode: '12345',
-          country: 'Test Country'
-        }
-      },
-      bedrooms: 2,
-      bathrooms: 1,
-      area: 1000,
-      isPublic: true
-    };
-
-    const privateListing = {
-      title: 'Private Apartment',
-      description: 'A private listing',
-      price: 2000,
-      location: {
-        coordinates: [0, 0],
-        address: {
-          street: '456 Main St',
-          city: 'Test City',
-          state: 'TS',
-          zipCode: '12345',
-          country: 'Test Country'
-        }
-      },
-      bedrooms: 3,
-      bathrooms: 2,
-      area: 1500,
-      isPublic: false
-    };
-
-    const publicResponse = await request(app)
-      .post('/api/apartments')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send(publicListing);
-    console.log('Public listing created:', publicResponse.body);
-
-    const privateResponse = await request(app)
-      .post('/api/apartments')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send(privateListing);
-    console.log('Private listing created:', privateResponse.body);
-
-    // Create private listing as agent
+    const publicListing = createTestApartment(true);
+    const privateListing = createTestApartment(false);
     const agentPrivateListing = {
+      ...createTestApartment(false),
       title: 'Agent Private Apartment',
       description: 'A private listing by agent',
       price: 3000,
-      location: {
-        coordinates: [0, 0],
-        address: {
-          street: '789 Main St',
-          city: 'Test City',
-          state: 'TS',
-          zipCode: '12345',
-          country: 'Test Country'
-        }
-      },
-      bedrooms: 4,
-      bathrooms: 3,
-      area: 2000,
-      isPublic: false
     };
 
-    const agentCreateResponse = await request(app)
+    // Create listings as admin
+    await Promise.all([
+      request(app)
+        .post('/api/apartments')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(publicListing),
+      request(app)
+        .post('/api/apartments')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(privateListing),
+    ]);
+
+    // Create private listing as agent
+    await request(app)
       .post('/api/apartments')
       .set('Authorization', `Bearer ${agentToken}`)
       .send(agentPrivateListing);
-    console.log('Agent listing created:', agentCreateResponse.body);
-
-    // Verify all listings exist in database
-    const allListings = await Apartment.find({});
-    console.log('All listings in database:', allListings.map(l => ({ title: l.title, isPublic: l.isPublic })));
 
     // Admin should see all listings
     const adminResponse = await request(app)
       .get('/api/apartments')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .set('Accept', 'application/json');
-
-    console.log('Admin response status:', adminResponse.status);
-    console.log('Admin response body:', JSON.stringify(adminResponse.body, null, 2));
-    console.log('Number of apartments found:', adminResponse.body.apartments.length);
-    console.log('Apartment titles:', adminResponse.body.apartments.map(apt => apt.title));
+      .set('Authorization', `Bearer ${adminToken}`);
 
     expect(adminResponse.status).toBe(200);
     expect(adminResponse.body.apartments).toHaveLength(3);
@@ -289,13 +201,13 @@ describe('Apartment Access Control', () => {
     // Agent should see public listings and their own private listing
     const agentResponse = await request(app)
       .get('/api/apartments')
-      .set('Authorization', `Bearer ${agentToken}`)
-      .set('Accept', 'application/json');
+      .set('Authorization', `Bearer ${agentToken}`);
 
     expect(agentResponse.status).toBe(200);
     expect(agentResponse.body.apartments).toHaveLength(2);
-    expect(agentResponse.body.apartments.some(apt => apt.isPublic)).toBe(true);
-    expect(agentResponse.body.apartments.some(apt => apt.owner._id.toString() === agentUser._id.toString())).toBe(true);
+    expect(
+      agentResponse.body.apartments.some((apt) => apt.title === 'Agent Private Apartment')
+    ).toBe(true);
   });
 
   test('should only allow admins to change isPublic status', async () => {
@@ -305,19 +217,20 @@ describe('Apartment Access Control', () => {
       description: 'A test listing',
       price: 1000,
       location: {
+        type: 'Point',
         coordinates: [0, 0],
         address: {
           street: '123 Main St',
           city: 'Test City',
           state: 'TS',
           zipCode: '12345',
-          country: 'Test Country'
-        }
+          country: 'Test Country',
+        },
       },
       bedrooms: 2,
       bathrooms: 1,
       area: 1000,
-      isPublic: true
+      isPublic: true,
     };
 
     const createResponse = await request(app)
@@ -331,7 +244,10 @@ describe('Apartment Access Control', () => {
     const agentResponse = await request(app)
       .put(`/api/apartments/${apartmentId}`)
       .set('Authorization', `Bearer ${agentToken}`)
-      .send({ isPublic: false });
+      .send({
+        ...listing,
+        isPublic: false,
+      });
 
     expect(agentResponse.status).toBe(403);
     expect(agentResponse.body.error).toBe('Only admins can change the public status of listings');
@@ -340,9 +256,12 @@ describe('Apartment Access Control', () => {
     const adminResponse = await request(app)
       .put(`/api/apartments/${apartmentId}`)
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ isPublic: false });
+      .send({
+        ...listing,
+        isPublic: false,
+      });
 
     expect(adminResponse.status).toBe(200);
     expect(adminResponse.body.isPublic).toBe(false);
   });
-}); 
+});

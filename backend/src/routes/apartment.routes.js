@@ -44,7 +44,7 @@ router.get('/public', validateApartmentQuery, getApartments); // Public listings
 // Protected routes - require authentication
 router.get('/', protect, validateApartmentQuery, getApartments); // All listings based on role
 router.get('/:id', protect, getApartment);
-router.post('/', protect, authorize(['admin', 'agent']), validateApartmentInput, createApartment);
+router.post('/', protect, authorize('admin', 'agent'), validateApartmentInput, createApartment);
 router.put('/:id', protect, validateApartmentInput, updateApartment);
 router.delete('/:id', protect, deleteApartment);
 

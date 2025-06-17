@@ -7,9 +7,6 @@ const protect = async (req, res, next) => {
 
     if (req.headers.authorization?.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
-      console.log('Token found:', token);
-    } else {
-      console.log('No token found in headers:', req.headers);
     }
 
     if (!token) {
@@ -19,16 +16,15 @@ const protect = async (req, res, next) => {
     try {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log('Decoded token:', decoded);
 
       // Get user from token
       const user = await User.findById(decoded.id).select('-password');
-      console.log('Found user:', user ? { id: user._id, role: user.role } : 'No user found');
 
       if (!user) {
         return res.status(401).json({ error: 'User not found' });
       }
 
+      // Attach the full user object to the request
       req.user = user;
       next();
     } catch (error) {
@@ -42,9 +38,9 @@ const protect = async (req, res, next) => {
 
 const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({
-        error: `User role ${req.user.role} is not authorized to access this route`,
+        error: `User role ${req.user?.role || 'none'} is not authorized to access this route`,
       });
     }
     next();
