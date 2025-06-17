@@ -84,14 +84,18 @@ afterAll(async () => {
     // Close cache
     if (cache) {
       cache.close();
+      cache = null;
     }
 
     // Disconnect from MongoDB
-    await mongoose.disconnect();
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+    }
 
     // Stop MongoDB memory server
     if (mongoServer) {
       await mongoServer.stop();
+      mongoServer = null;
     }
   } catch (error) {
     console.error('Error in afterAll:', error);
