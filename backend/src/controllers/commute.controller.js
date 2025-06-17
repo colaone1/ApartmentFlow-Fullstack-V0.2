@@ -3,6 +3,9 @@ const Apartment = require('../models/apartment.model');
 
 const mapsClient = new GoogleMapsClient(process.env.GOOGLE_MAPS_API_KEY);
 
+// IMPORTANT: Handles commute time and place details logic
+// TODO: Add caching for frequent commute queries
+
 exports.getCommuteTime = async (req, res) => {
   try {
     const { apartmentId, destination, mode = 'driving' } = req.body;
@@ -44,7 +47,7 @@ exports.getMultipleCommuteTimes = async (req, res) => {
     const origin = `${apartment.location.coordinates[1]},${apartment.location.coordinates[0]}`;
 
     // Get commute times for all destinations
-    const commutePromises = destinations.map(destination =>
+    const commutePromises = destinations.map((destination) =>
       mapsClient.getCommuteTime(origin, destination, mode)
     );
 
@@ -80,4 +83,4 @@ exports.getPlaceDetails = async (req, res) => {
       details: error.message,
     });
   }
-}; 
+};

@@ -10,6 +10,23 @@ A Node.js/Express backend for searching and organizing apartment listings, inclu
 - Comprehensive test suite with Jest
 - Linting and formatting with ESLint and Prettier
 
+## Project Structure
+
+```
+backend/src/
+  controllers/      # Route handler logic (see index.js for exports)
+  models/           # Mongoose models (see index.js for exports)
+  routes/           # Express route definitions (see index.js for exports)
+  middleware/       # Express middleware (see index.js for exports)
+  utils/            # Utility modules
+  config/           # Configuration files (e.g., Swagger)
+  __tests__/        # Test files
+  app.js            # Main Express app setup
+```
+
+- Each major directory has an `index.js` that exports all modules for easier imports and maintainability.
+- Key sections of code are marked with `// IMPORTANT:` or `// TODO:` comments for clarity and future work.
+
 ## Getting Started
 
 ### Prerequisites

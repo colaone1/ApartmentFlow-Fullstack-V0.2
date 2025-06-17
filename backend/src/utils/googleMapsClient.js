@@ -1,5 +1,8 @@
 const axios = require('axios');
 
+// Utility for interacting with the Google Maps API (directions, geocode, place details)
+// IMPORTANT: Used by commute controller for all Google Maps requests
+
 class GoogleMapsClient {
   constructor(apiKey) {
     this.apiKey = apiKey;
@@ -83,4 +86,4 @@ class GoogleMapsClient {
   }
 }
 
-module.exports = GoogleMapsClient; 
+module.exports = GoogleMapsClient;

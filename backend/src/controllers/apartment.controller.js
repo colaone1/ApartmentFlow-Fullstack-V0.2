@@ -120,23 +120,26 @@ const createApartment = async (req, res, next) => {
 // @access  Private
 const updateApartment = async (req, res) => {
   try {
+    // IMPORTANT: Find the apartment to ensure it exists and check permissions before updating
     const apartment = await Apartment.findById(req.params.id);
 
     if (!apartment) {
       return res.status(404).json({ error: 'Apartment not found' });
     }
 
-    // Check ownership or admin status
+    // IMPORTANT: Only the owner or an admin can update
     if (apartment.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Not authorized to update this apartment' });
     }
 
-    // Check for isPublic status change
+    // IMPORTANT: Only admins can change isPublic status
     if (req.body.isPublic !== undefined && req.user.role !== 'admin') {
       return res
         .status(403)
         .json({ error: 'Only admins can change the public status of listings' });
     }
+
+    // TODO: Add more granular field-level update permissions if needed in the future
 
     // Update apartment
     const updatedApartment = await Apartment.findByIdAndUpdate(
