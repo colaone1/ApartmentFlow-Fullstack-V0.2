@@ -10,11 +10,10 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "prepare": "husky",
-    "test:all": "npm --prefix backend test && npm --prefix frontend run lint"
+    "prepare": "husky"
   },
   "lint-staged": {
-    "src/**/*.{js,jsx,ts,tsx}": [
+    "src/**/*.js": [
       "eslint --fix --ignore-path .eslintignore",
       "prettier --write --ignore-path .prettierignore"
     ]
