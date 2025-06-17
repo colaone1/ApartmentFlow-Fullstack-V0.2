@@ -69,6 +69,14 @@ const apartmentSchema = new mongoose.Schema(
       enum: ['available', 'rented', 'pending'],
       default: 'available',
     },
+    isPublic: {
+      type: Boolean,
+      default: true,
+    },
+    externalUrl: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: true,
@@ -78,10 +86,11 @@ const apartmentSchema = new mongoose.Schema(
 // Create geospatial index for location queries
 apartmentSchema.index({ location: '2dsphere' });
 
-// Add indexes for the title, price, and status fields
+// Add indexes for the title, price, status, and isPublic fields
 apartmentSchema.index({ title: 1 });
 apartmentSchema.index({ price: 1 });
 apartmentSchema.index({ status: 1 });
+apartmentSchema.index({ isPublic: 1 });
 
 const Apartment = mongoose.model('Apartment', apartmentSchema);
 

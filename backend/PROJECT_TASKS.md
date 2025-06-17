@@ -11,6 +11,8 @@
 - Set up user roles & permissions
 - Implement authentication middleware
 - Implement CRUD operations for listings
+- Enforce isPublic access rules
+- Accept & store externalUrl
 
 ## Week 3 - Advanced Features & Optimization
 ✅ **Completed**
@@ -39,6 +41,8 @@
 - Image handling
 - Location data with coordinates
 - Search and filtering
+- Public/private access control
+- External URL support
 
 ### Favorites System
 ✅ **Completed**
@@ -54,6 +58,7 @@
 - API endpoint tests
 - Authentication tests
 - Pre-push test hooks
+- Access control tests
 
 ### Documentation
 🔄 **In Progress**

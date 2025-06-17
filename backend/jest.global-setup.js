@@ -10,4 +10,6 @@ module.exports = async () => {
   // Store the instance globally for teardown
   global.__MONGOD__ = mongod;
   process.env.MONGODB_URI = uri;
+  // Set up JWT secret for tests
+  process.env.JWT_SECRET = 'test-secret-key';
 };

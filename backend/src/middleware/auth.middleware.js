@@ -7,6 +7,9 @@ const protect = async (req, res, next) => {
 
     if (req.headers.authorization?.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
+      console.log('Token found:', token);
+    } else {
+      console.log('No token found in headers:', req.headers);
     }
 
     if (!token) {
@@ -19,13 +22,14 @@ const protect = async (req, res, next) => {
       console.log('Decoded token:', decoded);
 
       // Get user from token
-      req.user = await User.findById(decoded.id).select('-password');
-      console.log('Found user:', req.user ? { id: req.user._id, role: req.user.role } : 'No user found');
+      const user = await User.findById(decoded.id).select('-password');
+      console.log('Found user:', user ? { id: user._id, role: user.role } : 'No user found');
 
-      if (!req.user) {
+      if (!user) {
         return res.status(401).json({ error: 'User not found' });
       }
 
+      req.user = user;
       next();
     } catch (error) {
       console.error('Token verification error:', error);
