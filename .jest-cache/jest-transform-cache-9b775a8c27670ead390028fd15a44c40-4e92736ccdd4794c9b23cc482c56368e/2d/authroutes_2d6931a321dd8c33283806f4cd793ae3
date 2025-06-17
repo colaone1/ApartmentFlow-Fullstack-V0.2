@@ -1,0 +1,153 @@
+d5b43997b19855058338d7e2906c1818
+const express = require('express');
+const router = express.Router();
+const {
+  register,
+  login,
+  getMe,
+  logout
+} = require('../controllers/auth.controller');
+const {
+  protect
+} = require('../middleware/auth.middleware');
+const {
+  body
+} = require('express-validator');
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       required:
+ *         - email
+ *         - password
+ *         - firstName
+ *         - lastName
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: User's email address
+ *         password:
+ *           type: string
+ *           format: password
+ *           description: User's password
+ *         firstName:
+ *           type: string
+ *           description: User's first name
+ *         lastName:
+ *           type: string
+ *           description: User's last name
+ *     AuthResponse:
+ *       type: object
+ *       properties:
+ *         token:
+ *           type: string
+ *           description: JWT token for authentication
+ *         user:
+ *           $ref: '#/components/schemas/User'
+ */
+
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/User'
+ *     responses:
+ *       201:
+ *         description: User successfully registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       400:
+ *         description: Invalid input data
+ *       409:
+ *         description: Email already exists
+ */
+router.post('/register', [body('name').isString().trim().notEmpty().withMessage('Name is required'), body('email').isEmail().withMessage('Valid email is required'), body('password').isLength({
+  min: 6
+}).withMessage('Password must be at least 6 characters')], register);
+
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Login user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       401:
+ *         description: Invalid credentials
+ */
+router.post('/login', [body('email').isEmail().withMessage('Valid email is required'), body('password').isLength({
+  min: 6
+}).withMessage('Password must be at least 6 characters')], login);
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully logged out
+ *       401:
+ *         description: Not authenticated
+ */
+router.post('/logout', logout);
+
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Not authenticated
+ */
+router.get('/me', protect, getMe);
+module.exports = router;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJleHByZXNzIiwicmVxdWlyZSIsInJvdXRlciIsIlJvdXRlciIsInJlZ2lzdGVyIiwibG9naW4iLCJnZXRNZSIsImxvZ291dCIsInByb3RlY3QiLCJib2R5IiwicG9zdCIsImlzU3RyaW5nIiwidHJpbSIsIm5vdEVtcHR5Iiwid2l0aE1lc3NhZ2UiLCJpc0VtYWlsIiwiaXNMZW5ndGgiLCJtaW4iLCJnZXQiLCJtb2R1bGUiLCJleHBvcnRzIl0sInNvdXJjZXMiOlsiYXV0aC5yb3V0ZXMuanMiXSwic291cmNlc0NvbnRlbnQiOlsiY29uc3QgZXhwcmVzcyA9IHJlcXVpcmUoJ2V4cHJlc3MnKTtcclxuY29uc3Qgcm91dGVyID0gZXhwcmVzcy5Sb3V0ZXIoKTtcclxuY29uc3QgeyByZWdpc3RlciwgbG9naW4sIGdldE1lLCBsb2dvdXQgfSA9IHJlcXVpcmUoJy4uL2NvbnRyb2xsZXJzL2F1dGguY29udHJvbGxlcicpO1xyXG5jb25zdCB7IHByb3RlY3QgfSA9IHJlcXVpcmUoJy4uL21pZGRsZXdhcmUvYXV0aC5taWRkbGV3YXJlJyk7XHJcbmNvbnN0IHsgYm9keSB9ID0gcmVxdWlyZSgnZXhwcmVzcy12YWxpZGF0b3InKTtcclxuXHJcbi8qKlxyXG4gKiBAc3dhZ2dlclxyXG4gKiBjb21wb25lbnRzOlxyXG4gKiAgIHNjaGVtYXM6XHJcbiAqICAgICBVc2VyOlxyXG4gKiAgICAgICB0eXBlOiBvYmplY3RcclxuICogICAgICAgcmVxdWlyZWQ6XHJcbiAqICAgICAgICAgLSBlbWFpbFxyXG4gKiAgICAgICAgIC0gcGFzc3dvcmRcclxuICogICAgICAgICAtIGZpcnN0TmFtZVxyXG4gKiAgICAgICAgIC0gbGFzdE5hbWVcclxuICogICAgICAgcHJvcGVydGllczpcclxuICogICAgICAgICBlbWFpbDpcclxuICogICAgICAgICAgIHR5cGU6IHN0cmluZ1xyXG4gKiAgICAgICAgICAgZm9ybWF0OiBlbWFpbFxyXG4gKiAgICAgICAgICAgZGVzY3JpcHRpb246IFVzZXIncyBlbWFpbCBhZGRyZXNzXHJcbiAqICAgICAgICAgcGFzc3dvcmQ6XHJcbiAqICAgICAgICAgICB0eXBlOiBzdHJpbmdcclxuICogICAgICAgICAgIGZvcm1hdDogcGFzc3dvcmRcclxuICogICAgICAgICAgIGRlc2NyaXB0aW9uOiBVc2VyJ3MgcGFzc3dvcmRcclxuICogICAgICAgICBmaXJzdE5hbWU6XHJcbiAqICAgICAgICAgICB0eXBlOiBzdHJpbmdcclxuICogICAgICAgICAgIGRlc2NyaXB0aW9uOiBVc2VyJ3MgZmlyc3QgbmFtZVxyXG4gKiAgICAgICAgIGxhc3ROYW1lOlxyXG4gKiAgICAgICAgICAgdHlwZTogc3RyaW5nXHJcbiAqICAgICAgICAgICBkZXNjcmlwdGlvbjogVXNlcidzIGxhc3QgbmFtZVxyXG4gKiAgICAgQXV0aFJlc3BvbnNlOlxyXG4gKiAgICAgICB0eXBlOiBvYmplY3RcclxuICogICAgICAgcHJvcGVydGllczpcclxuICogICAgICAgICB0b2tlbjpcclxuICogICAgICAgICAgIHR5cGU6IHN0cmluZ1xyXG4gKiAgICAgICAgICAgZGVzY3JpcHRpb246IEpXVCB0b2tlbiBmb3IgYXV0aGVudGljYXRpb25cclxuICogICAgICAgICB1c2VyOlxyXG4gKiAgICAgICAgICAgJHJlZjogJyMvY29tcG9uZW50cy9zY2hlbWFzL1VzZXInXHJcbiAqL1xyXG5cclxuLyoqXHJcbiAqIEBzd2FnZ2VyXHJcbiAqIC9hcGkvYXV0aC9yZWdpc3RlcjpcclxuICogICBwb3N0OlxyXG4gKiAgICAgc3VtbWFyeTogUmVnaXN0ZXIgYSBuZXcgdXNlclxyXG4gKiAgICAgdGFnczogW0F1dGhdXHJcbiAqICAgICByZXF1ZXN0Qm9keTpcclxuICogICAgICAgcmVxdWlyZWQ6IHRydWVcclxuICogICAgICAgY29udGVudDpcclxuICogICAgICAgICBhcHBsaWNhdGlvbi9qc29uOlxyXG4gKiAgICAgICAgICAgc2NoZW1hOlxyXG4gKiAgICAgICAgICAgICAkcmVmOiAnIy9jb21wb25lbnRzL3NjaGVtYXMvVXNlcidcclxuICogICAgIHJlc3BvbnNlczpcclxuICogICAgICAgMjAxOlxyXG4gKiAgICAgICAgIGRlc2NyaXB0aW9uOiBVc2VyIHN1Y2Nlc3NmdWxseSByZWdpc3RlcmVkXHJcbiAqICAgICAgICAgY29udGVudDpcclxuICogICAgICAgICAgIGFwcGxpY2F0aW9uL2pzb246XHJcbiAqICAgICAgICAgICAgIHNjaGVtYTpcclxuICogICAgICAgICAgICAgICAkcmVmOiAnIy9jb21wb25lbnRzL3NjaGVtYXMvQXV0aFJlc3BvbnNlJ1xyXG4gKiAgICAgICA0MDA6XHJcbiAqICAgICAgICAgZGVzY3JpcHRpb246IEludmFsaWQgaW5wdXQgZGF0YVxyXG4gKiAgICAgICA0MDk6XHJcbiAqICAgICAgICAgZGVzY3JpcHRpb246IEVtYWlsIGFscmVhZHkgZXhpc3RzXHJcbiAqL1xyXG5yb3V0ZXIucG9zdCgnL3JlZ2lzdGVyJywgW1xyXG4gIGJvZHkoJ25hbWUnKS5pc1N0cmluZygpLnRyaW0oKS5ub3RFbXB0eSgpLndpdGhNZXNzYWdlKCdOYW1lIGlzIHJlcXVpcmVkJyksXHJcbiAgYm9keSgnZW1haWwnKS5pc0VtYWlsKCkud2l0aE1lc3NhZ2UoJ1ZhbGlkIGVtYWlsIGlzIHJlcXVpcmVkJyksXHJcbiAgYm9keSgncGFzc3dvcmQnKS5pc0xlbmd0aCh7IG1pbjogNiB9KS53aXRoTWVzc2FnZSgnUGFzc3dvcmQgbXVzdCBiZSBhdCBsZWFzdCA2IGNoYXJhY3RlcnMnKSxcclxuXSwgcmVnaXN0ZXIpO1xyXG5cclxuLyoqXHJcbiAqIEBzd2FnZ2VyXHJcbiAqIC9hcGkvYXV0aC9sb2dpbjpcclxuICogICBwb3N0OlxyXG4gKiAgICAgc3VtbWFyeTogTG9naW4gdXNlclxyXG4gKiAgICAgdGFnczogW0F1dGhdXHJcbiAqICAgICByZXF1ZXN0Qm9keTpcclxuICogICAgICAgcmVxdWlyZWQ6IHRydWVcclxuICogICAgICAgY29udGVudDpcclxuICogICAgICAgICBhcHBsaWNhdGlvbi9qc29uOlxyXG4gKiAgICAgICAgICAgc2NoZW1hOlxyXG4gKiAgICAgICAgICAgICB0eXBlOiBvYmplY3RcclxuICogICAgICAgICAgICAgcmVxdWlyZWQ6XHJcbiAqICAgICAgICAgICAgICAgLSBlbWFpbFxyXG4gKiAgICAgICAgICAgICAgIC0gcGFzc3dvcmRcclxuICogICAgICAgICAgICAgcHJvcGVydGllczpcclxuICogICAgICAgICAgICAgICBlbWFpbDpcclxuICogICAgICAgICAgICAgICAgIHR5cGU6IHN0cmluZ1xyXG4gKiAgICAgICAgICAgICAgICAgZm9ybWF0OiBlbWFpbFxyXG4gKiAgICAgICAgICAgICAgIHBhc3N3b3JkOlxyXG4gKiAgICAgICAgICAgICAgICAgdHlwZTogc3RyaW5nXHJcbiAqICAgICAgICAgICAgICAgICBmb3JtYXQ6IHBhc3N3b3JkXHJcbiAqICAgICByZXNwb25zZXM6XHJcbiAqICAgICAgIDIwMDpcclxuICogICAgICAgICBkZXNjcmlwdGlvbjogTG9naW4gc3VjY2Vzc2Z1bFxyXG4gKiAgICAgICAgIGNvbnRlbnQ6XHJcbiAqICAgICAgICAgICBhcHBsaWNhdGlvbi9qc29uOlxyXG4gKiAgICAgICAgICAgICBzY2hlbWE6XHJcbiAqICAgICAgICAgICAgICAgJHJlZjogJyMvY29tcG9uZW50cy9zY2hlbWFzL0F1dGhSZXNwb25zZSdcclxuICogICAgICAgNDAxOlxyXG4gKiAgICAgICAgIGRlc2NyaXB0aW9uOiBJbnZhbGlkIGNyZWRlbnRpYWxzXHJcbiAqL1xyXG5yb3V0ZXIucG9zdCgnL2xvZ2luJywgW1xyXG4gIGJvZHkoJ2VtYWlsJykuaXNFbWFpbCgpLndpdGhNZXNzYWdlKCdWYWxpZCBlbWFpbCBpcyByZXF1aXJlZCcpLFxyXG4gIGJvZHkoJ3Bhc3N3b3JkJykuaXNMZW5ndGgoeyBtaW46IDYgfSkud2l0aE1lc3NhZ2UoJ1Bhc3N3b3JkIG11c3QgYmUgYXQgbGVhc3QgNiBjaGFyYWN0ZXJzJyksXHJcbl0sIGxvZ2luKTtcclxuXHJcbi8qKlxyXG4gKiBAc3dhZ2dlclxyXG4gKiAvYXBpL2F1dGgvbG9nb3V0OlxyXG4gKiAgIHBvc3Q6XHJcbiAqICAgICBzdW1tYXJ5OiBMb2dvdXQgdXNlclxyXG4gKiAgICAgdGFnczogW0F1dGhdXHJcbiAqICAgICBzZWN1cml0eTpcclxuICogICAgICAgLSBiZWFyZXJBdXRoOiBbXVxyXG4gKiAgICAgcmVzcG9uc2VzOlxyXG4gKiAgICAgICAyMDA6XHJcbiAqICAgICAgICAgZGVzY3JpcHRpb246IFN1Y2Nlc3NmdWxseSBsb2dnZWQgb3V0XHJcbiAqICAgICAgIDQwMTpcclxuICogICAgICAgICBkZXNjcmlwdGlvbjogTm90IGF1dGhlbnRpY2F0ZWRcclxuICovXHJcbnJvdXRlci5wb3N0KCcvbG9nb3V0JywgbG9nb3V0KTtcclxuXHJcbi8qKlxyXG4gKiBAc3dhZ2dlclxyXG4gKiAvYXBpL2F1dGgvbWU6XHJcbiAqICAgZ2V0OlxyXG4gKiAgICAgc3VtbWFyeTogR2V0IGN1cnJlbnQgdXNlciBwcm9maWxlXHJcbiAqICAgICB0YWdzOiBbQXV0aF1cclxuICogICAgIHNlY3VyaXR5OlxyXG4gKiAgICAgICAtIGJlYXJlckF1dGg6IFtdXHJcbiAqICAgICByZXNwb25zZXM6XHJcbiAqICAgICAgIDIwMDpcclxuICogICAgICAgICBkZXNjcmlwdGlvbjogVXNlciBwcm9maWxlIHJldHJpZXZlZCBzdWNjZXNzZnVsbHlcclxuICogICAgICAgICBjb250ZW50OlxyXG4gKiAgICAgICAgICAgYXBwbGljYXRpb24vanNvbjpcclxuICogICAgICAgICAgICAgc2NoZW1hOlxyXG4gKiAgICAgICAgICAgICAgICRyZWY6ICcjL2NvbXBvbmVudHMvc2NoZW1hcy9Vc2VyJ1xyXG4gKiAgICAgICA0MDE6XHJcbiAqICAgICAgICAgZGVzY3JpcHRpb246IE5vdCBhdXRoZW50aWNhdGVkXHJcbiAqL1xyXG5yb3V0ZXIuZ2V0KCcvbWUnLCBwcm90ZWN0LCBnZXRNZSk7XHJcblxyXG5tb2R1bGUuZXhwb3J0cyA9IHJvdXRlcjtcclxuIl0sIm1h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

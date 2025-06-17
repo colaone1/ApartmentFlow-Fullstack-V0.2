@@ -1,0 +1,15 @@
+cc5aa536406ecbf6d75abe1c149fd557
+// This file is used to set up the test environment before running tests
+// Add any global setup code here
+
+// Example: Set up any global variables or mocks
+global.console = {
+  ...console
+  // Uncomment to suppress console.log during tests
+  // log: jest.fn(),
+  // error: jest.fn(),
+  // warn: jest.fn(),
+  // info: jest.fn(),
+  // debug: jest.fn(),
+};
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJnbG9iYWwiLCJjb25zb2xlIl0sInNvdXJjZXMiOlsiamVzdC5zZXR1cC5qcyJdLCJzb3VyY2VzQ29udGVudCI6WyIvLyBUaGlzIGZpbGUgaXMgdXNlZCB0byBzZXQgdXAgdGhlIHRlc3QgZW52aXJvbm1lbnQgYmVmb3JlIHJ1bm5pbmcgdGVzdHNcbi8vIEFkZCBhbnkgZ2xvYmFsIHNldHVwIGNvZGUgaGVyZVxuXG4vLyBFeGFtcGxlOiBTZXQgdXAgYW55IGdsb2JhbCB2YXJpYWJsZXMgb3IgbW9ja3Ncbmdsb2JhbC5jb25zb2xlID0ge1xuICAuLi5jb25zb2xlLFxuICAvLyBVbmNvbW1lbnQgdG8gc3VwcHJlc3MgY29uc29sZS5sb2cgZHVyaW5nIHRlc3RzXG4gIC8vIGxvZzogamVzdC5mbigpLFxuICAvLyBlcnJvcjogamVzdC5mbigpLFxuICAvLyB3YXJuOiBqZXN0LmZuKCksXG4gIC8vIGluZm86IGplc3QuZm4oKSxcbiAgLy8gZGVidWc6IGplc3QuZm4oKSxcbn07XG4iXSwibWFwcGluZ3MiOiJBQUFBO0FBQ0E7O0FBRUE7QUFDQUEsTUFBTSxDQUFDQyxPQUFPLEdBQUc7RUFDZixHQUFHQTtFQUNIO0VBQ0E7RUFDQTtFQUNBO0VBQ0E7RUFDQTtBQUNGLENBQUMiLCJpZ25vcmVMaXN0IjpbXX0=

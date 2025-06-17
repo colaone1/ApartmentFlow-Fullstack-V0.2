@@ -39,82 +39,69 @@ const createTestApartment = (isPublic = true) => ({
 });
 
 beforeAll(async () => {
-  try {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
-    cache = new NodeCache();
+  mongoServer = await MongoMemoryServer.create();
+  const uri = mongoServer.getUri();
+  await mongoose.connect(uri);
+  cache = new NodeCache();
 
-    // Create test users
-    adminUser = await User.create({
-      name: 'Admin User',
-      email: 'admin@test.com',
-      password: 'password123',
-      role: 'admin',
-    });
+  // Create test users
+  adminUser = await User.create({
+    name: 'Admin User',
+    email: 'admin@test.com',
+    password: 'password123',
+    role: 'admin',
+  });
 
-    agentUser = await User.create({
-      name: 'Agent User',
-      email: 'agent@test.com',
-      password: 'password123',
-      role: 'agent',
-    });
+  agentUser = await User.create({
+    name: 'Agent User',
+    email: 'agent@test.com',
+    password: 'password123',
+    role: 'agent',
+  });
 
-    regularUser = await User.create({
-      name: 'Regular User',
-      email: 'user@test.com',
-      password: 'password123',
-      role: 'user',
-    });
+  regularUser = await User.create({
+    name: 'Regular User',
+    email: 'user@test.com',
+    password: 'password123',
+    role: 'user',
+  });
 
-    // Generate tokens
-    adminToken = jwt.sign({ id: adminUser._id }, process.env.JWT_SECRET);
-    agentToken = jwt.sign({ id: agentUser._id }, process.env.JWT_SECRET);
-    userToken = jwt.sign({ id: regularUser._id }, process.env.JWT_SECRET);
-  } catch (error) {
-    console.error('Error in beforeAll:', error);
-    throw error;
-  }
+  // Generate tokens
+  adminToken = jwt.sign({ id: adminUser._id }, process.env.JWT_SECRET);
+  agentToken = jwt.sign({ id: agentUser._id }, process.env.JWT_SECRET);
+  userToken = jwt.sign({ id: regularUser._id }, process.env.JWT_SECRET);
 });
 
 afterAll(async () => {
-  try {
-    // Clean up all test data
-    await Promise.all([User.deleteMany({}), Apartment.deleteMany({})]);
+  // Clean up all test data
+  await User.deleteMany({});
+  await Apartment.deleteMany({});
 
-    // Close cache
-    if (cache) {
-      cache.close();
-      cache = null;
-    }
+  // Close cache
+  if (cache) {
+    cache.close();
+    cache = null;
+  }
 
-    // Disconnect from MongoDB
-    if (mongoose.connection.readyState !== 0) {
-      await mongoose.disconnect();
-    }
+  // Disconnect from MongoDB
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
 
-    // Stop MongoDB memory server
-    if (mongoServer) {
-      await mongoServer.stop();
-      mongoServer = null;
-    }
-  } catch (error) {
-    console.error('Error in afterAll:', error);
-    throw error;
+  // Stop MongoDB memory server
+  if (mongoServer) {
+    await mongoServer.stop();
+    mongoServer = null;
   }
 });
 
 beforeEach(async () => {
-  try {
-    // Clear the cache before each test
-    if (cache) {
-      cache.flushAll();
-    }
-    // Clear apartments before each test
-    await Apartment.deleteMany({});
-  } catch (error) {
-    console.error('Error in beforeEach:', error);
-    throw error;
+  // Clear the cache before each test
+  if (cache) {
+    cache.flushAll();
   }
+  // Clear apartments before each test
+  await Apartment.deleteMany({});
 });
 
 describe('Apartment Access Control', () => {

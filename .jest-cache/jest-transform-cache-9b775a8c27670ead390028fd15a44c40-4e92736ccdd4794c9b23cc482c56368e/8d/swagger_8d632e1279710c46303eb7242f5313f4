@@ -1,0 +1,36 @@
+86cebadefdf0822fa2142a55ddc4e5e0
+const swaggerJsdoc = require('swagger-jsdoc');
+const options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Apartment Flow API',
+      version: '1.0.0',
+      description: 'API documentation for the Apartment Flow application',
+      contact: {
+        name: 'API Support',
+        email: 'support@apartmentflow.com'
+      }
+    },
+    servers: [{
+      url: process.env.API_URL || 'http://localhost:3000',
+      description: 'Development server'
+    }],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT'
+        }
+      }
+    },
+    security: [{
+      bearerAuth: []
+    }]
+  },
+  apis: ['./src/routes/*.js'] // Path to the API routes
+};
+const specs = swaggerJsdoc(options);
+module.exports = specs;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJzd2FnZ2VySnNkb2MiLCJyZXF1aXJlIiwib3B0aW9ucyIsImRlZmluaXRpb24iLCJvcGVuYXBpIiwiaW5mbyIsInRpdGxlIiwidmVyc2lvbiIsImRlc2NyaXB0aW9uIiwiY29udGFjdCIsIm5hbWUiLCJlbWFpbCIsInNlcnZlcnMiLCJ1cmwiLCJwcm9jZXNzIiwiZW52IiwiQVBJX1VSTCIsImNvbXBvbmVudHMiLCJzZWN1cml0eVNjaGVtZXMiLCJiZWFyZXJBdXRoIiwidHlwZSIsInNjaGVtZSIsImJlYXJlckZvcm1hdCIsInNlY3VyaXR5IiwiYXBpcyIsInNwZWNzIiwibW9kdWxlIiwiZXhwb3J0cyJdLCJzb3VyY2VzIjpbInN3YWdnZXIuanMiXSwic291cmNlc0NvbnRlbnQiOlsiY29uc3Qgc3dhZ2dlckpzZG9jID0gcmVxdWlyZSgnc3dhZ2dlci1qc2RvYycpO1xyXG5cclxuY29uc3Qgb3B0aW9ucyA9IHtcclxuICBkZWZpbml0aW9uOiB7XHJcbiAgICBvcGVuYXBpOiAnMy4wLjAnLFxyXG4gICAgaW5mbzoge1xyXG4gICAgICB0aXRsZTogJ0FwYXJ0bWVudCBGbG93IEFQSScsXHJcbiAgICAgIHZlcnNpb246ICcxLjAuMCcsXHJcbiAgICAgIGRlc2NyaXB0aW9uOiAnQVBJIGRvY3VtZW50YXRpb24gZm9yIHRoZSBBcGFydG1lbnQgRmxvdyBhcHBsaWNhdGlvbicsXHJcbiAgICAgIGNvbnRhY3Q6IHtcclxuICAgICAgICBuYW1lOiAnQVBJIFN1cHBvcnQnLFxyXG4gICAgICAgIGVtYWlsOiAnc3VwcG9ydEBhcGFydG1lbnRmbG93LmNvbSdcclxuICAgICAgfVxyXG4gICAgfSxcclxuICAgIHNlcnZlcnM6IFtcclxuICAgICAge1xyXG4gICAgICAgIHVybDogcHJvY2Vzcy5lbnYuQVBJX1VSTCB8fCAnaHR0cDovL2xvY2FsaG9zdDozMDAwJyxcclxuICAgICAgICBkZXNjcmlwdGlvbjogJ0RldmVsb3BtZW50IHNlcnZlcidcclxuICAgICAgfVxyXG4gICAgXSxcclxuICAgIGNvbXBvbmVudHM6IHtcclxuICAgICAgc2VjdXJpdHlTY2hlbWVzOiB7XHJcbiAgICAgICAgYmVhcmVyQXV0aDoge1xyXG4gICAgICAgICAgdHlwZTogJ2h0dHAnLFxyXG4gICAgICAgICAgc2NoZW1lOiAnYmVhcmVyJyxcclxuICAgICAgICAgIGJlYXJlckZvcm1hdDogJ0pXVCdcclxuICAgICAgICB9XHJcbiAgICAgIH1cclxuICAgIH0sXHJcbiAgICBzZWN1cml0eTogW3tcclxuICAgICAgYmVhcmVyQXV0aDogW11cclxuICAgIH1dXHJcbiAgfSxcclxuICBhcGlzOiBbJy4vc3JjL3JvdXRlcy8qLmpzJ10sIC8vIFBhdGggdG8gdGhlIEFQSSByb3V0ZXNcclxufTtcclxuXHJcbmNvbnN0IHNwZWNzID0gc3dhZ2dlckpzZG9jKG9wdGlvbnMpO1xyXG5cclxubW9kdWxlLmV4cG9ydHMgPSBzcGVjczsgIl0sIm1hcHBpbmdzIjoiQUFBQSxNQUFNQSxZQUFZLEdBQUdDLE9BQU8sQ0FBQyxlQUFlLENBQUM7QUFFN0MsTUFBTUMsT0FBTyxHQUFHO0VBQ2RDLFVBQVUsRUFBRTtJQUNWQyxPQUFPLEVBQUUsT0FBTztJQUNoQkMsSUFBSSxFQUFFO01BQ0pDLEtBQUssRUFBRSxvQkFBb0I7TUFDM0JDLE9BQU8sRUFBRSxPQUFPO01BQ2hCQyxXQUFXLEVBQUUsc0RBQXNEO01BQ25FQyxPQUFPLEVBQUU7UUFDUEMsSUFBSSxFQUFFLGFBQWE7UUFDbkJDLEtBQUssRUFBRTtNQUNUO0lBQ0YsQ0FBQztJQUNEQyxPQUFPLEVBQUUsQ0FDUDtNQUNFQyxHQUFHLEVBQUVDLE9BQU8sQ0FBQ0MsR0FBRyxDQUFDQyxPQUFPLElBQUksdUJBQXVCO01BQ25EUixXQUFXLEVBQUU7SUFDZixDQUFDLENBQ0Y7SUFDRFMsVUFBVSxFQUFFO01BQ1ZDLGVBQWUsRUFBRTtRQUNmQyxVQUFVLEVBQUU7VUFDVkMsSUFBSSxFQUFFLE1BQU07VUFDWkMsTUFBTSxFQUFFLFFBQVE7VUFDaEJDLFlBQVksRUFBRTtRQUNoQjtNQUNGO0lBQ0YsQ0FBQztJQUNEQyxRQUFRLEVBQUUsQ0FBQztNQUNUSixVQUFVLEVBQUU7SUFDZCxDQUFDO0VBQ0gsQ0FBQztFQUNESyxJQUFJLEVBQUUsQ0FBQyxtQkFBbUIsQ0FBQyxDQUFFO0FBQy9CLENBQUM7QUFFRCxNQUFNQyxLQUFLLEdBQUd6QixZQUFZLENBQUNFLE9BQU8sQ0FBQztBQUVuQ3dCLE1BQU0sQ0FBQ0MsT0FBTyxHQUFHRixLQUFLIiwiaWdub3JlTGlzdCI6W119

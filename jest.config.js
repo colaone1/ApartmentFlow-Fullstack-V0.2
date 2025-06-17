@@ -1,8 +1,8 @@
 module.exports = {
   testEnvironment: 'node',
-  setupFilesAfterEnv: ['<rootDir>/src/__tests__/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/jest.env-setup.js'],
   testMatch: ['**/__tests__/**/*.test.js'],
-  verbose: false,
+  verbose: true,
   forceExit: true,
   clearMocks: true,
   resetMocks: true,
@@ -10,8 +10,7 @@ module.exports = {
   maxWorkers: '50%',
   testTimeout: 30000,
   bail: 1,
-  cache: true,
-  cacheDirectory: process.env.JEST_CACHE_DIR || '.jest-cache',
+  cache: false,
   maxConcurrency: 1,
   detectOpenHandles: true,
   detectLeaks: true,
@@ -20,10 +19,5 @@ module.exports = {
   ],
   moduleFileExtensions: ['js', 'json'],
   testPathIgnorePatterns: ['/node_modules/', '/dist/'],
-  coveragePathIgnorePatterns: ['/node_modules/', '/dist/'],
-  globals: {
-    'ts-jest': {
-      isolatedModules: true
-    }
-  }
+  coveragePathIgnorePatterns: ['/node_modules/', '/dist/']
 };
