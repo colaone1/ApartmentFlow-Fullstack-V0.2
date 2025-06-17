@@ -10,9 +10,6 @@ process.env.JWT_EXPIRATION_INTERVAL = '1h';
 
 // Mock necessary modules
 jest.mock('axios');
-jest.mock('jwt-simple');
-jest.mock('passport-jwt');
-jest.mock('passport-http-bearer');
 
 // Increase timeout for all tests
 jest.setTimeout(60000);
