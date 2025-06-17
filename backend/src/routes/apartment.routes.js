@@ -10,14 +10,42 @@ const {
   deleteApartment,
 } = require('../controllers/apartment.controller');
 
+// Validation middleware
+const validateApartmentInput = (req, res, next) => {
+  const { title, description, price, location } = req.body;
+  const errors = [];
+
+  if (!title || title.trim().length < 3) {
+    errors.push('Title must be at least 3 characters long');
+  }
+
+  if (!description || description.trim().length < 10) {
+    errors.push('Description must be at least 10 characters long');
+  }
+
+  if (!price || isNaN(price) || price <= 0) {
+    errors.push('Price must be a positive number');
+  }
+
+  if (!location || !location.address) {
+    errors.push('Location with address is required');
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({ errors });
+  }
+
+  next();
+};
+
 // Public routes - accessible without authentication
 router.get('/public', validateApartmentQuery, getApartments); // Public listings only
 
 // Protected routes - require authentication
 router.get('/', protect, validateApartmentQuery, getApartments); // All listings based on role
 router.get('/:id', protect, getApartment);
-router.post('/', protect, createApartment);
-router.put('/:id', protect, updateApartment);
+router.post('/', protect, authorize(['admin', 'agent']), validateApartmentInput, createApartment);
+router.put('/:id', protect, validateApartmentInput, updateApartment);
 router.delete('/:id', protect, deleteApartment);
 
 /**

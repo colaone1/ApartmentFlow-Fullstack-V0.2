@@ -97,12 +97,48 @@ app.use('/api/favorites', favoriteRoutes);
 app.use('/api/commute', commuteRoutes);
 app.use('/api/users', userRoutes);
 
-// Error handling middleware (from Express.js web-service example)
+// Error handling middleware
 app.use(function (err, req, res, next) {
-  // whatever you want here, feel free to populate
-  // properties on `err` to treat it differently in here.
-  res.status(err.status || 500);
-  res.json({ error: err.message });
+  // Log error for debugging
+  console.error(err.stack);
+
+  // Handle mongoose validation errors
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({
+      error: 'Validation Error',
+      details: Object.values(err.errors).map(e => e.message)
+    });
+  }
+
+  // Handle mongoose cast errors (invalid ObjectId)
+  if (err.name === 'CastError') {
+    return res.status(400).json({
+      error: 'Invalid ID format',
+      details: err.message
+    });
+  }
+
+  // Handle JWT errors
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({
+      error: 'Invalid token',
+      details: 'Please log in again'
+    });
+  }
+
+  // Handle JWT expiration
+  if (err.name === 'TokenExpiredError') {
+    return res.status(401).json({
+      error: 'Token expired',
+      details: 'Please log in again'
+    });
+  }
+
+  // Default error
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error',
+    details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
 });
 
 // 404 handler (from Express.js web-service example)

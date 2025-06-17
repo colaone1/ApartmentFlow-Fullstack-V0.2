@@ -4,52 +4,56 @@ const NodeCache = require('node-cache');
 // Initialize cache with a standard TTL of 10 minutes
 const cache = new NodeCache({ stdTTL: 600 });
 
+// Query builder for apartment filters
+const buildApartmentQuery = (req) => {
+  const query = {};
+  
+  // Handle user role-based access
+  if (req.user) {
+    if (req.user.role === 'admin') {
+      // Admin sees all listings
+      Object.assign(query, {});
+    } else if (req.user.role === 'agent') {
+      // Agent sees public listings and their own private listings
+      Object.assign(query, {
+        $or: [
+          { isPublic: true },
+          { owner: req.user.id }
+        ]
+      });
+    } else {
+      // Regular users see only public listings
+      Object.assign(query, { isPublic: true });
+    }
+  } else {
+    // Unauthenticated users see only public listings
+    Object.assign(query, { isPublic: true });
+  }
+
+  // Add filter conditions
+  const filters = {
+    price: (val) => ({ price: { $lte: Number(val) } }),
+    bedrooms: (val) => ({ bedrooms: { $gte: Number(val) } }),
+    status: (val) => ({ status: val }),
+    location: (val) => ({ 'location.address.city': new RegExp(val, 'i') })
+  };
+
+  // Apply filters from query params
+  Object.entries(req.query).forEach(([key, value]) => {
+    if (filters[key]) {
+      Object.assign(query, filters[key](value));
+    }
+  });
+
+  return query;
+};
+
 // @desc    Get all apartments
 // @route   GET /api/apartments
 // @access  Public
 const getApartments = async (req, res) => {
   try {
-    // Build query based on user role and authentication
-    let query = {};
-    
-    if (req.user) {
-      console.log('Authenticated user query:', { role: req.user.role, userId: req.user.id });
-      
-      if (req.user.role === 'admin') {
-        // Admin sees all listings
-        query = {};
-      } else if (req.user.role === 'agent') {
-        // Agent sees public listings and their own private listings
-        query = {
-          $or: [
-            { isPublic: true },
-            { owner: req.user.id }
-          ]
-        };
-      } else {
-        // Regular users see only public listings
-        query = { isPublic: true };
-      }
-    } else {
-      // Unauthenticated users see only public listings
-      console.log('Anonymous user query:', { isPublic: true });
-      query = { isPublic: true };
-    }
-
-    // Add additional filters from query params
-    if (req.query.price) {
-      query.price = { $lte: Number(req.query.price) };
-    }
-    if (req.query.bedrooms) {
-      query.bedrooms = { $gte: Number(req.query.bedrooms) };
-    }
-    if (req.query.status) {
-      query.status = req.query.status;
-    }
-    if (req.query.location) {
-      query['location.address.city'] = new RegExp(req.query.location, 'i');
-    }
-
+    const query = buildApartmentQuery(req);
     console.log('Final query:', JSON.stringify(query));
 
     // Execute query with pagination
