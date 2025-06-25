@@ -33,7 +33,7 @@ const registerAndLoginUser = async (email) => {
     }
     
     return {
-      userId: loginResponse.body.user._id,
+      userId: loginResponse.body._id,
       token: loginResponse.body.token,
     };
   } catch (error) {

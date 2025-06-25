@@ -26,15 +26,11 @@ const register = asyncHandler(async (req, res) => {
     });
   }
 
-  // Hash password
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-
-  // Create user
+  // Create user (password will be hashed by the pre-save hook)
   const user = await User.create({
     name,
     email,
-    password: hashedPassword,
+    password, // Don't hash here - the model will handle it
   });
 
   if (user) {
@@ -60,26 +56,39 @@ const register = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/login
 // @access  Public
 const login = async (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array().map((e) => e.msg) });
-  }
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid credentials',
+        details: errors.array().map((e) => e.msg) 
+      });
+    }
+
     const { email, password } = req.body;
 
     // Check for user email
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ 
+        success: false,
+        error: 'Invalid credentials' 
+      });
     }
 
     // Check password
     const isMatch = await user.comparePassword(password);
+
     if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ 
+        success: false,
+        error: 'Invalid credentials' 
+      });
     }
 
     res.json({
+      success: true,
       _id: user._id,
       name: user.name,
       email: user.email,
@@ -87,6 +96,7 @@ const login = async (req, res, next) => {
       token: generateToken(user._id),
     });
   } catch (error) {
+    console.error('Login error:', error);
     next(error);
   }
 };

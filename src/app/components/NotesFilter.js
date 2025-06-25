@@ -1,6 +1,6 @@
 "use client";
 
-const NotesFilter = ({ filters, onFilterChange }) => {
+const NotesFilter = ({ filters = { search: '', category: 'all', priority: 'all', sortBy: 'newest' }, onFilterChange = () => {} }) => {
   const { search, category, priority, sortBy } = filters;
 
   const handleChange = (key, value) => {
