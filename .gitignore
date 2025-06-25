@@ -90,3 +90,12 @@ troubleshooting/DATABASE_TROUBLESHOOTING.md
 troubleshooting/SECURITY_TROUBLESHOOTING.md
 troubleshooting/DEPLOYMENT_TROUBLESHOOTING.md
 troubleshooting/PERFORMANCE_TROUBLESHOOTING.md
+
+# Uploaded files
+/uploads/
+backend/uploads/
+
+# Database dumps
+*.dump
+*.bak
+*.sql

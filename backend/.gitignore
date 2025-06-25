@@ -26,4 +26,12 @@ logs
 # Build
 dist/
 build/
-coverage/ 
+coverage/
+
+# Uploaded files
+uploads/
+
+# Database dumps
+*.dump
+*.bak
+*.sql 
