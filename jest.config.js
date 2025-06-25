@@ -20,7 +20,6 @@ const customJestConfig = {
     '<rootDir>/.next/', 
     '<rootDir>/node_modules/',
     '<rootDir>/backend/',
-    '<rootDir>/apiClient/',
     '<rootDir>/backup/',
     '<rootDir>/merged/',
     '<rootDir>/temp_repo/',

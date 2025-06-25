@@ -9,7 +9,22 @@ export const AuthProvider =({ children }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    const apiClient = new ApiClient();
+    // Token management functions
+    const getAuthToken = () => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('authToken');
+        }
+        return null;
+    };
+
+    const clearAuthToken = () => {
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('authToken');
+        }
+    };
+
+    const apiClient = new ApiClient(getAuthToken, clearAuthToken);
+    
     useEffect(() => {
         const checkAuth = async () => {
             const loggedIn = apiClient.isLoggedIn();

@@ -1,14 +1,16 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { AuthProvider, useAuth } from '../AuthContext'
-import { act } from 'react'
 
-// Mock the API client
-jest.mock('../../../../apiClient/apiClient', () => ({
-  ApiClient: {
+// Mock the ApiClient
+jest.mock('../../../apiClient/apiClient', () => ({
+  ApiClient: jest.fn().mockImplementation(() => ({
+    isLoggedIn: jest.fn(),
+    getProfile: jest.fn(),
     login: jest.fn(),
     register: jest.fn(),
-    logout: jest.fn()
-  }
+    logout: jest.fn(),
+    removeProfile: jest.fn(),
+  }))
 }))
 
 // Mock Next.js router
