@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { ApiClient } from '../../../apiClient/apiClient';
+import { ApiClient } from '../../utils/apiClient';
 import Input from '../components/Input';
 import Button from '../components/Button';
 

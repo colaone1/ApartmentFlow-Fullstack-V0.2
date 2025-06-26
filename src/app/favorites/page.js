@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { ApiClient } from '../../../apiClient/apiClient';
+import { ApiClient } from '../../utils/apiClient';
 import ListingCard from '../components/ListingCard';
 
 export default function FavoritesPage() {
@@ -27,14 +27,12 @@ export default function FavoritesPage() {
   if (favorites.length === 0) return <p>No favorite apartments yet.</p>;
 
   return (
-          <div className="mt-6 max-w-2/3 md:max-w-4xl mx-auto px-2">
-      
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {favorites.map((apartment) => (
-                  <ListingCard key={apartment._id} apartment={apartment} />
-                ))}
-              </div>
-            </div>
-        
+    <div className="mt-6 max-w-2/3 md:max-w-4xl mx-auto px-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {favorites.map((apartment) => (
+          <ListingCard key={apartment._id} apartment={apartment} />
+        ))}
+      </div>
+    </div>
   );
 }

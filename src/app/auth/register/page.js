@@ -1,53 +1,55 @@
-"use client";
-import { ApiClient } from "../../../../apiClient/apiClient";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/context/AuthContext";
+'use client';
+import { ApiClient } from '../../utils/apiClient';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/app/context/AuthContext';
 
 export default function Register() {
   const [registrationForm, setRegistrationForm] = useState({
-    name: "",
-    email: "",
-    password: "",
+    name: '',
+    email: '',
+    password: '',
   });
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { register } = useAuth();
 
   function handleChange(e) {
     setRegistrationForm({ ...registrationForm, [e.target.name]: e.target.value });
-    setError("");
+    setError('');
   }
 
-  const handleSubmit =async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!registrationForm.name || !registrationForm.email || !registrationForm.password){
-      setError("All fields must be completed before submitting.");
+    if (!registrationForm.name || !registrationForm.email || !registrationForm.password) {
+      setError('All fields must be completed before submitting.');
       return;
     }
     setLoading(true);
-    try{
+    try {
       const apiClient = new ApiClient();
-      const response = await register(registrationForm.name, registrationForm.email, registrationForm.password);
-      if (response.data && response.data.token){
-        router.push("/listings");
+      const response = await register(
+        registrationForm.name,
+        registrationForm.email,
+        registrationForm.password
+      );
+      if (response.data && response.data.token) {
+        router.push('/listings');
       } else {
-        setError("Registered successfully but no token received.");
+        setError('Registered successfully but no token received.');
       }
-    }catch (err) {
-      console.error("Register error:", err.response || err);
-      setError(err.response?.data?.message || "Invalid credentials.");
-    }finally {
+    } catch (err) {
+      console.error('Register error:', err.response || err);
+      setError(err.response?.data?.message || 'Invalid credentials.');
+    } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-6 text-center text-[var(--color-primary)]">
-        Register
-      </h2>
+      <h2 className="text-2xl font-bold mb-6 text-center text-[var(--color-primary)]">Register</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1">Name</label>
