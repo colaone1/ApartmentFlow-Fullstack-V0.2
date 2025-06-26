@@ -12,8 +12,11 @@
 8. [Notes Backend Specific Issues](#notes-backend-specific-issues)
 9. [Performance Testing Issues](#performance-testing-issues)
 10. [Integration Testing Issues](#integration-testing-issues)
-11. [Quick Reference](#quick-reference)
-12. [Rate Limiting and Test Payload Validity](#rate-limiting-and-test-payload-validity)
+11. [Frontend Import Resolution Issues](#frontend-import-resolution-issues)
+12. [ESLint Warning Management](#eslint-warning-management)
+13. [Build Process Issues](#build-process-issues)
+14. [Quick Reference](#quick-reference)
+15. [Rate Limiting and Test Payload Validity](#rate-limiting-and-test-payload-validity)
 
 ---
 
@@ -1003,6 +1006,260 @@ it('should persist data correctly', async () => {
   const apartment = await Apartment.create(createTestApartment(user._id));
   expect(apartment.owner.toString()).toBe(user._id.toString());
 });
+```
+
+---
+
+## Frontend Import Resolution Issues
+
+### 1. Module Resolution Errors in Next.js
+
+**Issue**: Next.js build fails with "Module not found" errors for ApiClient and other utilities
+**Error**: `Module not found: Can't resolve '../../utils/apiClient'`
+
+**Root Cause**: Relative import paths not resolving correctly in Next.js build process
+
+**Fix**: Use absolute imports with `@/` prefix configured in `jsconfig.json`:
+
+```javascript
+// ❌ INCORRECT: Relative imports that may fail
+import { ApiClient } from '../../utils/apiClient';
+import performanceMonitor from '../utils/performance';
+
+// ✅ CORRECT: Absolute imports with @/ prefix
+import { ApiClient } from '@/utils/apiClient';
+import performanceMonitor from '@/utils/performance';
+```
+
+**Configuration**: Ensure `jsconfig.json` is properly configured:
+
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+```
+
+### 2. Jest Module Resolution in Frontend Tests
+
+**Issue**: Jest tests fail to resolve modules when using relative imports
+**Error**: `Cannot resolve module '../../utils/apiClient'`
+
+**Fix**: Update Jest configuration to handle absolute imports:
+
+```javascript
+// jest.config.js
+module.exports = {
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  moduleNameMapping: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
+  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
+};
+```
+
+### 3. Import Path Consistency
+
+**Issue**: Inconsistent import paths across components causing build failures
+**Error**: Some files use relative paths, others use absolute paths
+
+**Fix**: Standardize all imports to use absolute paths with `@/` prefix:
+
+```bash
+# Files that need updating:
+# - src/app/auth/register/page.js
+# - src/app/listings/[id]/page.js
+# - src/app/profile/edit/page.js
+# - src/app/listings/page.js
+# - src/app/favorites/page.js
+# - src/app/context/AuthContext.js
+# - src/app/apartmentAdd/page.js
+# - src/app/components/ErrorBoundary.js
+```
+
+**Prevention**:
+
+- Always use `@/` prefix for imports from src/ directory
+- Configure ESLint to enforce consistent import patterns
+- Use IDE extensions to automatically fix import paths
+
+---
+
+## ESLint Warning Management
+
+### 1. High ESLint Warning Count
+
+**Issue**: 186 ESLint warnings affecting code quality and build process
+**Error**: Warnings about unused variables, console statements, and undefined variables
+
+**Categories of Warnings**:
+
+- **no-unused-vars**: Unused imports and variables
+- **no-console**: Console statements in production code
+- **no-undef**: Undefined variables (especially in test files)
+
+**Fix Strategy**:
+
+```javascript
+// 1. Remove unused imports
+// ❌ INCORRECT
+import React, { useState, useEffect } from 'react'; // useEffect not used
+
+// ✅ CORRECT
+import React, { useState } from 'react';
+
+// 2. Handle console statements
+// ❌ INCORRECT
+console.log('Debug info');
+
+// ✅ CORRECT
+if (process.env.NODE_ENV === 'development') {
+  console.log('Debug info');
+}
+
+// 3. Fix undefined variables in tests
+// ❌ INCORRECT
+const { setupTestDB } = require('./setup'); // setupTestDB doesn't exist
+
+// ✅ CORRECT
+require('./setup'); // Just run the setup
+```
+
+### 2. ESLint Configuration for Development
+
+**Issue**: ESLint rules too strict for development workflow
+**Error**: Too many warnings blocking development
+
+**Fix**: Configure ESLint with appropriate rules for development:
+
+```javascript
+// eslint.config.js
+module.exports = {
+  rules: {
+    // Allow console statements in development
+    'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'warn',
+
+    // Allow unused variables in test files
+    'no-unused-vars': [
+      'error',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        ignoreRestSiblings: true,
+      },
+    ],
+
+    // Allow undefined variables in test files
+    'no-undef': ['error', { typeof: true }],
+  },
+  overrides: [
+    {
+      files: ['**/__tests__/**/*.js', '**/*.test.js'],
+      rules: {
+        'no-console': 'off',
+        'no-unused-vars': 'warn',
+      },
+    },
+  ],
+};
+```
+
+### 3. Automated ESLint Fixes
+
+**Issue**: Manual fixing of 186 warnings is time-consuming
+**Error**: Build process slowed down by warning count
+
+**Fix**: Use automated tools to fix common issues:
+
+```bash
+# Fix automatically fixable issues
+npx eslint --fix src/
+
+# Fix specific rule violations
+npx eslint --fix --rule 'no-unused-vars: error' src/
+
+# Generate report of remaining issues
+npx eslint --format=compact src/ > eslint-report.txt
+```
+
+**Target**: Reduce warnings from 186 to <50 for production readiness
+
+---
+
+## Build Process Issues
+
+### 1. Next.js Build Failures
+
+**Issue**: Build process fails due to module resolution errors
+**Error**: `Failed to compile` with module not found errors
+
+**Root Cause**: Import path issues and ESLint configuration problems
+
+**Fix**: Comprehensive build process setup:
+
+```javascript
+// next.config.mjs
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    appDir: true,
+  },
+  eslint: {
+    // Don't fail build on ESLint warnings
+    ignoreDuringBuilds: false,
+  },
+  typescript: {
+    // Don't fail build on TypeScript errors
+    ignoreBuildErrors: false,
+  },
+};
+
+export default nextConfig;
+```
+
+### 2. Husky Pre-push Hook Failures
+
+**Issue**: Git push blocked by failing tests or build process
+**Error**: `husky - pre-push script failed (code 1)`
+
+**Fix**: Ensure all pre-push checks pass:
+
+```json
+// package.json
+{
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm run test && npm run build"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx}": ["eslint --fix", "git add"]
+  }
+}
+```
+
+### 3. Environment-Specific Build Issues
+
+**Issue**: Build works locally but fails in CI/CD
+**Error**: Different behavior between local and remote environments
+
+**Fix**: Consistent environment setup:
+
+```bash
+# Ensure consistent Node.js version
+# .nvmrc
+18.17.0
+
+# Ensure consistent package versions
+npm ci --only=production
+
+# Run build with proper environment
+NODE_ENV=production npm run build
 ```
 
 ---

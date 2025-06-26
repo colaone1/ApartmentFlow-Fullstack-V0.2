@@ -1,6 +1,7 @@
 # Testing Troubleshooting Guide
 
 ## Table of Contents
+
 1. [Test Environment Setup](#test-environment-setup)
 2. [Database Testing Issues](#database-testing-issues)
 3. [Authentication Issues in Tests](#authentication-issues-in-tests)
@@ -11,18 +12,23 @@
 8. [Notes Backend Specific Issues](#notes-backend-specific-issues)
 9. [Performance Testing Issues](#performance-testing-issues)
 10. [Integration Testing Issues](#integration-testing-issues)
-11. [Quick Reference](#quick-reference)
-12. [Rate Limiting and Test Payload Validity](#rate-limiting-and-test-payload-validity)
+11. [Frontend Import Resolution Issues](#frontend-import-resolution-issues)
+12. [ESLint Warning Management](#eslint-warning-management)
+13. [Build Process Issues](#build-process-issues)
+14. [Quick Reference](#quick-reference)
+15. [Rate Limiting and Test Payload Validity](#rate-limiting-and-test-payload-validity)
 
 ---
 
 ## Test Environment Setup
 
 ### 1. Jest Configuration Issues
+
 **Issue**: Jest not running properly or tests failing due to configuration
 **Error**: Various Jest-related errors
 
 **Fix**: Proper Jest configuration in `jest.config.js`:
+
 ```javascript
 module.exports = {
   testEnvironment: 'node',
@@ -40,10 +46,12 @@ module.exports = {
 ```
 
 ### 2. Test Setup Function Issues
+
 **Issue**: Test helper functions not properly exported or imported
 **Error**: `ReferenceError: setupTestDB is not a function`
 
 **Fix**: Ensure proper test setup:
+
 ```javascript
 // ✅ CORRECT: Use require instead of destructuring
 require('./setup'); // This runs the setup hooks
@@ -52,16 +60,19 @@ require('./setup'); // This runs the setup hooks
 const { setupTestDB } = require('./setup'); // setupTestDB doesn't exist
 ```
 
-**Prevention**: 
+**Prevention**:
+
 - Check what's actually exported from setup files
 - Use `require('./setup')` to run setup hooks
 - Don't assume helper functions exist without checking
 
 ### 3. Environment Variable Issues
+
 **Issue**: Tests failing due to missing environment variables
 **Error**: `process.env.VARIABLE is undefined`
 
 **Fix**: Set up test environment variables in `jest.setup.js`:
+
 ```javascript
 // Set test environment variables
 process.env.NODE_ENV = 'test';
@@ -73,10 +84,12 @@ process.env.CLOUDINARY_API_SECRET = 'test-secret';
 ```
 
 ### 4. Test Database Connection Issues
+
 **Issue**: Tests can't connect to test database
 **Error**: `MongoNetworkError: connect ECONNREFUSED`
 
 **Fix**: Proper test database setup with error handling:
+
 ```javascript
 // jest.setup.js
 beforeAll(async () => {
@@ -107,6 +120,7 @@ afterAll(async () => {
 ## Rate Limiting and Test Payload Validity
 
 ### 1. Bypassing Rate Limiting in Test Environments
+
 **Issue**: Tests fail with HTTP 429 errors (Too Many Requests) when hitting authentication or other rate-limited endpoints repeatedly.
 
 **Error**: `429 Too Many Requests` or `Too many authentication attempts, please try again later.`
@@ -122,6 +136,7 @@ if (process.env.NODE_ENV !== 'test') {
 ```
 
 ### 2. Valid Payloads for Authorization Tests
+
 **Issue**: Tests for authorization (403 errors) send incomplete or invalid payloads, causing validation errors (400) before the authorization check is reached.
 
 **Error**: `400 Validation Error` instead of expected `403 Forbidden`.
@@ -149,10 +164,12 @@ expect(response.status).toBe(403);
 ## Database Testing Issues
 
 ### 1. Database Cleanup Issues
+
 **Issue**: Tests affecting each other due to shared database state
 **Error**: Inconsistent test results, data conflicts
 
 **Fix**: Proper test isolation with comprehensive cleanup:
+
 ```javascript
 // Clean up after each test
 afterEach(async () => {
@@ -170,10 +187,12 @@ afterEach(async () => {
 ```
 
 ### 2. Slow Database Queries in Tests
+
 **Issue**: Tests taking too long due to slow database operations
 **Error**: Test timeouts
 
 **Fix**: Optimize test database operations:
+
 ```javascript
 // Use lean() for read-only operations
 const apartments = await Apartment.find().lean();
@@ -182,24 +201,26 @@ const apartments = await Apartment.find().lean();
 const apartments = await Apartment.find().select('title price location');
 
 // Use bulk operations for multiple documents
-const bulkOps = testData.map(data => ({
-  insertOne: { document: data }
+const bulkOps = testData.map((data) => ({
+  insertOne: { document: data },
 }));
 await Apartment.bulkWrite(bulkOps);
 ```
 
 ### 3. Test Data Factory Pattern
+
 **Issue**: Inconsistent test data creation
 **Error**: Tests failing due to missing or invalid data
 
 **Fix**: Implement test data factories:
+
 ```javascript
 // Test data factories
 const createTestUser = (overrides = {}) => ({
   name: 'Test User',
   email: `test${Date.now()}@example.com`,
   password: 'password123',
-  ...overrides
+  ...overrides,
 });
 
 const createTestApartment = (userId, overrides = {}) => ({
@@ -222,7 +243,7 @@ const createTestApartment = (userId, overrides = {}) => ({
   area: 800,
   owner: userId,
   isPublic: true,
-  ...overrides
+  ...overrides,
 });
 
 // Usage in tests
@@ -235,35 +256,33 @@ const apartmentData = createTestApartment(userId, { price: 2000 });
 ## Authentication Issues in Tests
 
 ### 1. JWT Token Issues
+
 **Issue**: Tests failing due to invalid JWT tokens
 **Error**: 401 Unauthorized errors in tests
 
 **Fix**: Use API endpoints for user creation and authentication in tests:
+
 ```javascript
 // ✅ CORRECT: Register and login via API
 const registerAndLoginUser = async (email = `test${Date.now()}@example.com`) => {
   try {
     // Register via API (ensures password hashing)
-    await request(app)
-      .post('/api/auth/register')
-      .send({
-        name: 'Test User',
-        email,
-        password: 'password123',
-      });
-    
+    await request(app).post('/api/auth/register').send({
+      name: 'Test User',
+      email,
+      password: 'password123',
+    });
+
     // Login via API (ensures valid token)
-    const loginResponse = await request(app)
-      .post('/api/auth/login')
-      .send({
-        email,
-        password: 'password123',
-      });
-    
+    const loginResponse = await request(app).post('/api/auth/login').send({
+      email,
+      password: 'password123',
+    });
+
     return {
       userId: loginResponse.body._id,
       token: loginResponse.body.token,
-      user: loginResponse.body
+      user: loginResponse.body,
     };
   } catch (error) {
     console.error('User registration/login failed:', error);
@@ -272,17 +291,20 @@ const registerAndLoginUser = async (email = `test${Date.now()}@example.com`) => 
 };
 ```
 
-**Prevention**: 
+**Prevention**:
+
 - Always use API endpoints for user creation in tests
 - Never create users directly in database (bypasses password hashing)
 - Use the same authentication flow as production
 - Add error handling for registration/login failures
 
 ### 2. Password Hashing Issues
+
 **Issue**: Password comparison failures in tests
 **Error**: Login failures despite correct credentials
 
 **Fix**: Ensure consistent password hashing:
+
 ```javascript
 // Use bcrypt consistently with proper error handling
 const hashPassword = async (password) => {
@@ -305,27 +327,28 @@ const comparePassword = async (password, hashedPassword) => {
 ```
 
 ### 3. Authentication Middleware Testing
+
 **Issue**: Authentication middleware not working in tests
 **Error**: Tests failing due to authentication issues
 
 **Fix**: Test authentication middleware properly:
+
 ```javascript
 // Test authentication middleware
 describe('Authentication Middleware', () => {
   it('should allow authenticated requests', async () => {
     const { token } = await registerAndLoginUser();
-    
+
     const response = await request(app)
       .get('/api/protected-route')
       .set('Authorization', `Bearer ${token}`);
-    
+
     expect(response.status).toBe(200);
   });
 
   it('should reject unauthenticated requests', async () => {
-    const response = await request(app)
-      .get('/api/protected-route');
-    
+    const response = await request(app).get('/api/protected-route');
+
     expect(response.status).toBe(401);
   });
 
@@ -333,7 +356,7 @@ describe('Authentication Middleware', () => {
     const response = await request(app)
       .get('/api/protected-route')
       .set('Authorization', 'Bearer invalid-token');
-    
+
     expect(response.status).toBe(401);
   });
 });
@@ -344,16 +367,18 @@ describe('Authentication Middleware', () => {
 ## Schema Validation Errors
 
 ### 1. Missing Required Fields
+
 **Issue**: Tests creating documents without all required fields
 **Error**: Mongoose validation errors
 
 **Fix**: Always provide all required fields, even in edge case tests:
+
 ```javascript
 // ✅ CORRECT: Even validation tests need valid data
 it('should validate required fields', async () => {
   // Create a valid apartment first
   const validApartment = await createTestApartment(testUser._id);
-  
+
   const response = await request(app)
     .post('/api/notes')
     .set('Authorization', `Bearer ${authToken}`)
@@ -366,10 +391,12 @@ it('should validate required fields', async () => {
 ```
 
 ### 2. Data Type Mismatches
+
 **Issue**: Tests sending wrong data types
 **Error**: Cast errors or validation failures
 
 **Fix**: Ensure correct data types with validation:
+
 ```javascript
 // Data type validation helpers
 const validateObjectId = (id) => {
@@ -391,14 +418,14 @@ it('should validate data types', async () => {
   const invalidData = {
     price: 'not-a-number',
     email: 'invalid-email',
-    apartmentId: 'invalid-id'
+    apartmentId: 'invalid-id',
   };
-  
+
   const response = await request(app)
     .post('/api/apartments')
     .set('Authorization', `Bearer ${authToken}`)
     .send(invalidData);
-  
+
   expect(response.status).toBe(400);
   expect(response.body.errors).toContain('Invalid price format');
   expect(response.body.errors).toContain('Invalid email format');
@@ -406,16 +433,18 @@ it('should validate data types', async () => {
 ```
 
 ### 3. Enum Validation Errors
+
 **Issue**: Values not matching enum constraints
 **Error**: `ValidationError: Path 'status' is invalid`
 
 **Fix**: Use valid enum values and test edge cases:
+
 ```javascript
 // Test enum validation
 describe('Enum Validation', () => {
   it('should accept valid enum values', async () => {
     const validStatuses = ['available', 'rented', 'maintenance'];
-    
+
     for (const status of validStatuses) {
       const apartmentData = createTestApartment(testUser._id, { status });
       const apartment = new Apartment(apartmentData);
@@ -424,11 +453,11 @@ describe('Enum Validation', () => {
   });
 
   it('should reject invalid enum values', async () => {
-    const apartmentData = createTestApartment(testUser._id, { 
-      status: 'invalid-status' 
+    const apartmentData = createTestApartment(testUser._id, {
+      status: 'invalid-status',
     });
     const apartment = new Apartment(apartmentData);
-    
+
     await expect(apartment.save()).rejects.toThrow();
   });
 });
@@ -439,10 +468,12 @@ describe('Enum Validation', () => {
 ## Test Data Isolation
 
 ### 1. Shared Test Data Issues
+
 **Issue**: Tests affecting each other due to shared data
 **Error**: Inconsistent test results
 
 **Fix**: Create fresh data for each test with proper isolation:
+
 ```javascript
 // ✅ CORRECT: Each test creates its own data
 describe('Notes API', () => {
@@ -464,7 +495,7 @@ describe('Notes API', () => {
     const noteData = {
       apartmentId: testApartment._id,
       title: 'Test Note',
-      content: 'Test content'
+      content: 'Test content',
     };
 
     const response = await request(app)
@@ -479,10 +510,12 @@ describe('Notes API', () => {
 ```
 
 ### 2. Database State Pollution
+
 **Issue**: Tests leaving data that affects other tests
 **Error**: Test failures due to unexpected data
 
 **Fix**: Proper cleanup between tests with error handling:
+
 ```javascript
 // Clean up all collections after each test
 afterEach(async () => {
@@ -502,22 +535,24 @@ afterEach(async () => {
 ```
 
 ### 3. Test Data Dependencies
+
 **Issue**: Tests depending on specific data state
 **Error**: Brittle tests that fail when data changes
 
 **Fix**: Use explicit test data setup:
+
 ```javascript
 // Avoid depending on existing data
 it('should not depend on existing data', async () => {
   // Create all required data explicitly
   const user = await User.create(createTestUser());
   const apartment = await Apartment.create(createTestApartment(user._id));
-  
+
   // Test with explicit data
   const response = await request(app)
     .get(`/api/apartments/${apartment._id}`)
     .set('Authorization', `Bearer ${generateToken(user._id)}`);
-  
+
   expect(response.status).toBe(200);
   expect(response.body._id).toBe(apartment._id.toString());
 });
@@ -528,39 +563,43 @@ it('should not depend on existing data', async () => {
 ## Mock and Stub Issues
 
 ### 1. External Service Mocks
+
 **Issue**: Tests failing due to external service dependencies
 **Error**: Network errors or service unavailability
 
 **Fix**: Proper mocking of external services:
+
 ```javascript
 // Mock external services
 jest.mock('../utils/emailService', () => ({
   sendEmail: jest.fn().mockResolvedValue({ success: true }),
-  sendWelcomeEmail: jest.fn().mockResolvedValue({ success: true })
+  sendWelcomeEmail: jest.fn().mockResolvedValue({ success: true }),
 }));
 
 jest.mock('../utils/cloudinary', () => ({
   uploadImage: jest.fn().mockResolvedValue({
     secure_url: 'https://example.com/image.jpg',
-    public_id: 'test-image-id'
+    public_id: 'test-image-id',
   }),
-  deleteImage: jest.fn().mockResolvedValue({ success: true })
+  deleteImage: jest.fn().mockResolvedValue({ success: true }),
 }));
 
 jest.mock('../utils/googleMapsClient', () => ({
   geocode: jest.fn().mockResolvedValue({
     lat: 51.5074,
     lng: -0.1276,
-    formatted_address: 'London, UK'
-  })
+    formatted_address: 'London, UK',
+  }),
 }));
 ```
 
 ### 2. Database Mock Issues
+
 **Issue**: Database operations not being mocked properly
 **Error**: Tests hitting real database
 
 **Fix**: Mock database operations when needed:
+
 ```javascript
 // Mock Mongoose operations
 jest.mock('../models/user.model', () => ({
@@ -574,7 +613,7 @@ jest.mock('../models/user.model', () => ({
 const mockUser = {
   _id: '507f1f77bcf86cd799439011',
   name: 'Test User',
-  email: 'test@example.com'
+  email: 'test@example.com',
 };
 
 User.findOne.mockResolvedValue(mockUser);
@@ -582,10 +621,12 @@ User.create.mockResolvedValue(mockUser);
 ```
 
 ### 3. Time and Date Mocking
+
 **Issue**: Tests failing due to time-dependent logic
 **Error**: Inconsistent test results based on timing
 
 **Fix**: Mock time and date functions:
+
 ```javascript
 // Mock Date.now()
 const mockDate = new Date('2024-01-01T00:00:00.000Z');
@@ -606,10 +647,12 @@ jest.useRealTimers();
 ## Jest Configuration Issues
 
 ### 1. Test Timeout Issues
+
 **Issue**: Tests timing out
 **Error**: `Timeout - Async callback was not invoked within the 5000ms timeout`
 
 **Fix**: Increase timeout in Jest config and handle async operations:
+
 ```javascript
 // jest.config.js
 module.exports = {
@@ -626,10 +669,12 @@ it('should handle async operations', async () => {
 ```
 
 ### 2. Coverage Issues
+
 **Issue**: Coverage not being generated properly
 **Error**: Missing coverage reports
 
 **Fix**: Proper coverage configuration:
+
 ```javascript
 // jest.config.js
 module.exports = {
@@ -641,22 +686,20 @@ module.exports = {
       branches: 80,
       functions: 80,
       lines: 80,
-      statements: 80
-    }
+      statements: 80,
+    },
   },
-  coveragePathIgnorePatterns: [
-    '/node_modules/',
-    '/coverage/',
-    '/jest.setup.js'
-  ]
+  coveragePathIgnorePatterns: ['/node_modules/', '/coverage/', '/jest.setup.js'],
 };
 ```
 
 ### 3. Module Resolution Issues
+
 **Issue**: Tests can't resolve modules
 **Error**: `Cannot resolve module`
 
 **Fix**: Configure module resolution:
+
 ```javascript
 // jest.config.js
 module.exports = {
@@ -675,15 +718,18 @@ module.exports = {
 ## Notes Backend Specific Issues
 
 ### 1. Persistent Schema Validation Errors in Tests
+
 **Issue**: Tests failing with `ValidationError: Apartment validation failed: owner: Path 'owner' is required`
 **Error**: Occurs when creating notes that reference apartments without proper ownership
 
-**Root Cause**: 
+**Root Cause**:
+
 - Tests creating apartments directly without the required `owner` field
 - Database cleanup between tests affecting apartment references
 - Tests relying on shared apartment objects that may be cleaned up
 
 **Fix**: Always create apartments with proper ownership in tests:
+
 ```javascript
 // ✅ CORRECT: Create apartment with owner
 const createTestApartment = async (userId) => {
@@ -722,16 +768,19 @@ beforeEach(async () => {
 });
 ```
 
-**Prevention**: 
+**Prevention**:
+
 - Never create apartments without the `owner` field, even in validation tests
 - Always use helper functions that ensure all required fields are provided
 - Create fresh apartments for each test rather than relying on shared objects
 
 ### 2. Test Data Isolation Issues
+
 **Issue**: Tests affecting each other due to shared database state
 **Error**: Inconsistent test results, data conflicts
 
 **Fix**: Ensure proper test isolation:
+
 ```javascript
 // ✅ CORRECT: Each test creates its own data
 describe('Notes API', () => {
@@ -750,30 +799,28 @@ describe('Notes API', () => {
 ```
 
 ### 3. Authentication Token Issues in Tests
+
 **Issue**: Tests failing due to invalid JWT tokens
 **Error**: 401 Unauthorized errors in tests
 
 **Fix**: Use API endpoints for user creation and authentication in tests:
+
 ```javascript
 // ✅ CORRECT: Register and login via API
 const registerAndLoginUser = async (email = 'testuser@example.com') => {
   // Register via API (ensures password hashing)
-  await request(app)
-    .post('/api/auth/register')
-    .send({
-      name: 'Test User',
-      email,
-      password: 'password123',
-    });
-  
+  await request(app).post('/api/auth/register').send({
+    name: 'Test User',
+    email,
+    password: 'password123',
+  });
+
   // Login via API (ensures valid token)
-  const loginResponse = await request(app)
-    .post('/api/auth/login')
-    .send({
-      email,
-      password: 'password123',
-    });
-  
+  const loginResponse = await request(app).post('/api/auth/login').send({
+    email,
+    password: 'password123',
+  });
+
   return {
     userId: loginResponse.body._id,
     token: loginResponse.body.token,
@@ -781,22 +828,25 @@ const registerAndLoginUser = async (email = 'testuser@example.com') => {
 };
 ```
 
-**Prevention**: 
+**Prevention**:
+
 - Always use API endpoints for user creation in tests
 - Never create users directly in database (bypasses password hashing)
 - Use the same authentication flow as production
 
 ### 4. Missing Required Fields in Test Data
+
 **Issue**: Tests creating documents without all required fields
 **Error**: Mongoose validation errors
 
 **Fix**: Always provide all required fields, even in edge case tests:
+
 ```javascript
 // ✅ CORRECT: Even validation tests need valid data
 it('should validate required fields', async () => {
   // Create a valid apartment first
   const validApartment = await createTestApartment(testUser._id);
-  
+
   const response = await request(app)
     .post('/api/notes')
     .set('Authorization', `Bearer ${authToken}`)
@@ -809,10 +859,12 @@ it('should validate required fields', async () => {
 ```
 
 ### 5. Test Setup Function Issues
+
 **Issue**: Test helper functions not properly exported or imported
 **Error**: `ReferenceError: setupTestDB is not a function`
 
 **Fix**: Ensure proper test setup:
+
 ```javascript
 // ✅ CORRECT: Use require instead of destructuring
 require('./setup'); // This runs the setup hooks
@@ -821,7 +873,8 @@ require('./setup'); // This runs the setup hooks
 const { setupTestDB } = require('./setup'); // setupTestDB doesn't exist
 ```
 
-**Prevention**: 
+**Prevention**:
+
 - Check what's actually exported from setup files
 - Use `require('./setup')` to run setup hooks
 - Don't assume helper functions exist without checking
@@ -831,10 +884,12 @@ const { setupTestDB } = require('./setup'); // setupTestDB doesn't exist
 ## Performance Testing Issues
 
 ### 1. Slow Test Execution
+
 **Issue**: Test suite taking too long to run
 **Error**: CI/CD timeouts, slow development feedback
 
 **Fix**: Optimize test performance:
+
 ```javascript
 // Use parallel test execution
 // jest.config.js
@@ -854,19 +909,21 @@ const createBulkTestData = async (count = 10) => {
 ```
 
 ### 2. Memory Leaks in Tests
+
 **Issue**: Tests consuming too much memory
 **Error**: Out of memory errors, slow performance
 
 **Fix**: Prevent memory leaks:
+
 ```javascript
 // Clean up after each test
 afterEach(async () => {
   // Clear all mocks
   jest.clearAllMocks();
-  
+
   // Clear timers
   jest.clearAllTimers();
-  
+
   // Clean up database
   await cleanupDatabase();
 });
@@ -880,40 +937,38 @@ const testData = new WeakMap();
 ## Integration Testing Issues
 
 ### 1. API Integration Test Issues
+
 **Issue**: Integration tests failing due to API changes
 **Error**: Tests not reflecting actual API behavior
 
 **Fix**: Proper API integration testing:
+
 ```javascript
 // Test complete API workflows
 describe('Complete User Workflow', () => {
   it('should handle user registration to apartment creation', async () => {
     // 1. Register user
-    const registerResponse = await request(app)
-      .post('/api/auth/register')
-      .send(createTestUser());
-    
+    const registerResponse = await request(app).post('/api/auth/register').send(createTestUser());
+
     expect(registerResponse.status).toBe(201);
-    
+
     // 2. Login user
-    const loginResponse = await request(app)
-      .post('/api/auth/login')
-      .send({
-        email: registerResponse.body.email,
-        password: 'password123'
-      });
-    
+    const loginResponse = await request(app).post('/api/auth/login').send({
+      email: registerResponse.body.email,
+      password: 'password123',
+    });
+
     expect(loginResponse.status).toBe(200);
     const token = loginResponse.body.token;
-    
+
     // 3. Create apartment
     const apartmentResponse = await request(app)
       .post('/api/apartments')
       .set('Authorization', `Bearer ${token}`)
       .send(createTestApartment(loginResponse.body._id));
-    
+
     expect(apartmentResponse.status).toBe(201);
-    
+
     // 4. Create note for apartment
     const noteResponse = await request(app)
       .post('/api/notes')
@@ -921,30 +976,32 @@ describe('Complete User Workflow', () => {
       .send({
         apartmentId: apartmentResponse.body._id,
         title: 'Test Note',
-        content: 'Test content'
+        content: 'Test content',
       });
-    
+
     expect(noteResponse.status).toBe(201);
   });
 });
 ```
 
 ### 2. Database Integration Issues
+
 **Issue**: Tests not properly testing database interactions
 **Error**: Tests passing but production failing
 
 **Fix**: Test actual database operations:
+
 ```javascript
 // Test actual database operations
 it('should persist data correctly', async () => {
   const userData = createTestUser();
   const user = await User.create(userData);
-  
+
   // Verify data was actually saved
   const savedUser = await User.findById(user._id);
   expect(savedUser).toBeDefined();
   expect(savedUser.email).toBe(userData.email);
-  
+
   // Test relationships
   const apartment = await Apartment.create(createTestApartment(user._id));
   expect(apartment.owner.toString()).toBe(user._id.toString());
@@ -953,9 +1010,264 @@ it('should persist data correctly', async () => {
 
 ---
 
+## Frontend Import Resolution Issues
+
+### 1. Module Resolution Errors in Next.js
+
+**Issue**: Next.js build fails with "Module not found" errors for ApiClient and other utilities
+**Error**: `Module not found: Can't resolve '../../utils/apiClient'`
+
+**Root Cause**: Relative import paths not resolving correctly in Next.js build process
+
+**Fix**: Use absolute imports with `@/` prefix configured in `jsconfig.json`:
+
+```javascript
+// ❌ INCORRECT: Relative imports that may fail
+import { ApiClient } from '../../utils/apiClient';
+import performanceMonitor from '../utils/performance';
+
+// ✅ CORRECT: Absolute imports with @/ prefix
+import { ApiClient } from '@/utils/apiClient';
+import performanceMonitor from '@/utils/performance';
+```
+
+**Configuration**: Ensure `jsconfig.json` is properly configured:
+
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+```
+
+### 2. Jest Module Resolution in Frontend Tests
+
+**Issue**: Jest tests fail to resolve modules when using relative imports
+**Error**: `Cannot resolve module '../../utils/apiClient'`
+
+**Fix**: Update Jest configuration to handle absolute imports:
+
+```javascript
+// jest.config.js
+module.exports = {
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  moduleNameMapping: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
+  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
+};
+```
+
+### 3. Import Path Consistency
+
+**Issue**: Inconsistent import paths across components causing build failures
+**Error**: Some files use relative paths, others use absolute paths
+
+**Fix**: Standardize all imports to use absolute paths with `@/` prefix:
+
+```bash
+# Files that need updating:
+# - src/app/auth/register/page.js
+# - src/app/listings/[id]/page.js
+# - src/app/profile/edit/page.js
+# - src/app/listings/page.js
+# - src/app/favorites/page.js
+# - src/app/context/AuthContext.js
+# - src/app/apartmentAdd/page.js
+# - src/app/components/ErrorBoundary.js
+```
+
+**Prevention**:
+
+- Always use `@/` prefix for imports from src/ directory
+- Configure ESLint to enforce consistent import patterns
+- Use IDE extensions to automatically fix import paths
+
+---
+
+## ESLint Warning Management
+
+### 1. High ESLint Warning Count
+
+**Issue**: 186 ESLint warnings affecting code quality and build process
+**Error**: Warnings about unused variables, console statements, and undefined variables
+
+**Categories of Warnings**:
+
+- **no-unused-vars**: Unused imports and variables
+- **no-console**: Console statements in production code
+- **no-undef**: Undefined variables (especially in test files)
+
+**Fix Strategy**:
+
+```javascript
+// 1. Remove unused imports
+// ❌ INCORRECT
+import React, { useState, useEffect } from 'react'; // useEffect not used
+
+// ✅ CORRECT
+import React, { useState } from 'react';
+
+// 2. Handle console statements
+// ❌ INCORRECT
+console.log('Debug info');
+
+// ✅ CORRECT
+if (process.env.NODE_ENV === 'development') {
+  console.log('Debug info');
+}
+
+// 3. Fix undefined variables in tests
+// ❌ INCORRECT
+const { setupTestDB } = require('./setup'); // setupTestDB doesn't exist
+
+// ✅ CORRECT
+require('./setup'); // Just run the setup
+```
+
+### 2. ESLint Configuration for Development
+
+**Issue**: ESLint rules too strict for development workflow
+**Error**: Too many warnings blocking development
+
+**Fix**: Configure ESLint with appropriate rules for development:
+
+```javascript
+// eslint.config.js
+module.exports = {
+  rules: {
+    // Allow console statements in development
+    'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'warn',
+
+    // Allow unused variables in test files
+    'no-unused-vars': [
+      'error',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        ignoreRestSiblings: true,
+      },
+    ],
+
+    // Allow undefined variables in test files
+    'no-undef': ['error', { typeof: true }],
+  },
+  overrides: [
+    {
+      files: ['**/__tests__/**/*.js', '**/*.test.js'],
+      rules: {
+        'no-console': 'off',
+        'no-unused-vars': 'warn',
+      },
+    },
+  ],
+};
+```
+
+### 3. Automated ESLint Fixes
+
+**Issue**: Manual fixing of 186 warnings is time-consuming
+**Error**: Build process slowed down by warning count
+
+**Fix**: Use automated tools to fix common issues:
+
+```bash
+# Fix automatically fixable issues
+npx eslint --fix src/
+
+# Fix specific rule violations
+npx eslint --fix --rule 'no-unused-vars: error' src/
+
+# Generate report of remaining issues
+npx eslint --format=compact src/ > eslint-report.txt
+```
+
+**Target**: Reduce warnings from 186 to <50 for production readiness
+
+---
+
+## Build Process Issues
+
+### 1. Next.js Build Failures
+
+**Issue**: Build process fails due to module resolution errors
+**Error**: `Failed to compile` with module not found errors
+
+**Root Cause**: Import path issues and ESLint configuration problems
+
+**Fix**: Comprehensive build process setup:
+
+```javascript
+// next.config.mjs
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    appDir: true,
+  },
+  eslint: {
+    // Don't fail build on ESLint warnings
+    ignoreDuringBuilds: false,
+  },
+  typescript: {
+    // Don't fail build on TypeScript errors
+    ignoreBuildErrors: false,
+  },
+};
+
+export default nextConfig;
+```
+
+### 2. Husky Pre-push Hook Failures
+
+**Issue**: Git push blocked by failing tests or build process
+**Error**: `husky - pre-push script failed (code 1)`
+
+**Fix**: Ensure all pre-push checks pass:
+
+```json
+// package.json
+{
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm run test && npm run build"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx}": ["eslint --fix", "git add"]
+  }
+}
+```
+
+### 3. Environment-Specific Build Issues
+
+**Issue**: Build works locally but fails in CI/CD
+**Error**: Different behavior between local and remote environments
+
+**Fix**: Consistent environment setup:
+
+```bash
+# Ensure consistent Node.js version
+# .nvmrc
+18.17.0
+
+# Ensure consistent package versions
+npm ci --only=production
+
+# Run build with proper environment
+NODE_ENV=production npm run build
+```
+
+---
+
 ## Quick Reference
 
 ### Common Commands
+
 ```bash
 # Run all tests
 npm test
@@ -983,6 +1295,7 @@ npm test -- --testNamePattern="should create"
 ```
 
 ### Common Error Messages
+
 - `ValidationError: owner: Path 'owner' is required`: Missing required field in test data
 - `TypeError: asyncHandler is not a function`: Missing utility function
 - `ReferenceError: setupTestDB is not a function`: Incorrect test setup import
@@ -993,7 +1306,9 @@ npm test -- --testNamePattern="should create"
 - `Jest did not exit`: Memory leak or hanging async operations
 
 ### Emergency Procedures
+
 1. **Tests Failing**
+
    - Check test database connection
    - Verify test environment variables
    - Review test data setup
@@ -1001,12 +1316,14 @@ npm test -- --testNamePattern="should create"
    - Clear test cache
 
 2. **Authentication Issues in Tests**
+
    - Use API endpoints for user creation
    - Ensure proper token generation
    - Check JWT secret configuration
    - Verify authentication middleware
 
 3. **Database Issues in Tests**
+
    - Check test database connection
    - Verify database cleanup
    - Check for data isolation problems
@@ -1019,6 +1336,7 @@ npm test -- --testNamePattern="should create"
    - Clear test cache
 
 ### Test Best Practices
+
 1. **Always use descriptive test names** that explain what is being tested
 2. **Follow the AAA pattern**: Arrange, Act, Assert
 3. **Test one thing at a time** - each test should have a single responsibility
@@ -1032,5 +1350,5 @@ npm test -- --testNamePattern="should create"
 
 ---
 
-*Last Updated: December 2024*
-*Part of the Apartment Search Project Troubleshooting Suite* 
+_Last Updated: December 2024_
+_Part of the Apartment Search Project Troubleshooting Suite_
