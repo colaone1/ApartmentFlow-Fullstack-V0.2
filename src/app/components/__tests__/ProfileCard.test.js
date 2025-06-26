@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
+// eslint-disable-next-line no-unused-vars
 import ProfileCard from '../ProfileCard';
+// eslint-disable-next-line no-unused-vars
 import { AuthProvider } from '../../context/AuthContext';
 
 // Mock Next.js router

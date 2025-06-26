@@ -1,4 +1,5 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
+// eslint-disable-next-line no-unused-vars
 import { AuthProvider, useAuth } from '../AuthContext';
 
 // Mock the ApiClient
@@ -35,8 +36,9 @@ jest.mock('next/navigation', () => ({
   },
 }));
 
-// Test component to access context
+// eslint-disable-next-line no-unused-vars
 const TestComponent = () => {
+  // eslint-disable-next-line no-unused-vars
   const { user, isLoggedIn, login, logout, register } = useAuth();
   return (
     <div>

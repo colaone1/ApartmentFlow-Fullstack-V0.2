@@ -1,4 +1,5 @@
 // AI-OPTIMIZED: Frontend Performance Monitoring Utility
+import React, { useEffect, useRef } from 'react';
 
 /**
  * Performance monitoring class for frontend optimization
@@ -201,6 +202,97 @@ class PerformanceMonitor {
     } catch (error) {
       console.error('Failed to export performance metrics:', error);
     }
+  }
+
+  // AI-OPTIMIZED: Log performance metrics
+  logMetrics() {
+    // eslint-disable-next-line no-console
+    console.log('Performance Metrics:', this.getMetrics());
+  }
+
+  // AI-OPTIMIZED: Log performance summary
+  logSummary() {
+    const summary = this.generateSummary();
+    // eslint-disable-next-line no-console
+    console.log('Performance Summary:', summary);
+    return summary;
+  }
+
+  // AI-OPTIMIZED: Log memory usage
+  logMemoryUsage() {
+    // eslint-disable-next-line no-console
+    console.log('Memory Usage:', this.getMemoryUsage());
+  }
+
+  // AI-OPTIMIZED: Log performance warning
+  logWarning(message, data) {
+    // eslint-disable-next-line no-console
+    console.warn(`Performance Warning: ${message}`, data);
+  }
+
+  // AI-OPTIMIZED: Log performance error
+  logError(message, error) {
+    // eslint-disable-next-line no-console
+    console.error(`Performance Error: ${message}`, error);
+  }
+
+  // AI-OPTIMIZED: Component render tracking
+  trackComponentRender(componentName, renderTime) {
+    this.metrics.componentRenders.push({
+      componentName,
+      renderTime,
+      timestamp: Date.now(),
+    });
+
+    // AI-OPTIMIZED: Log slow renders
+    if (renderTime > 100) {
+      // eslint-disable-next-line no-console
+      console.warn(`Slow component render: ${componentName} took ${renderTime}ms`);
+    }
+  }
+
+  // AI-OPTIMIZED: User interaction tracking
+  trackUserInteraction(interactionType, duration) {
+    this.metrics.userInteractions.push({
+      type: interactionType,
+      duration,
+      timestamp: Date.now(),
+    });
+
+    // AI-OPTIMIZED: Log slow interactions
+    if (duration > 500) {
+      // eslint-disable-next-line no-console
+      console.warn(`Slow user interaction: ${interactionType} took ${duration}ms`);
+    }
+  }
+
+  // AI-OPTIMIZED: Error tracking
+  trackError(error, context) {
+    this.metrics.errors.push({
+      message: error.message,
+      stack: error.stack,
+      context,
+      timestamp: Date.now(),
+    });
+
+    // AI-OPTIMIZED: Log errors for debugging
+    // eslint-disable-next-line no-console
+    console.error('Performance Error:', error, context);
+  }
+
+  // AI-OPTIMIZED: React hook for performance monitoring
+  usePerformanceMonitor(componentName) {
+    const renderStartTime = useRef(Date.now());
+
+    useEffect(() => {
+      const renderTime = Date.now() - renderStartTime.current;
+      this.trackComponentRender(componentName, renderTime);
+    });
+
+    return {
+      trackInteraction: (type, duration) => this.trackUserInteraction(type, duration),
+      trackError: (error) => this.trackError(error, { component: componentName }),
+    };
   }
 }
 

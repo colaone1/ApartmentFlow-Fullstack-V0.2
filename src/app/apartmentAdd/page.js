@@ -1,8 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { ApiClient } from '@/utils/apiClient';
+import { useRouter } from 'next/navigation';
+// eslint-disable-next-line no-unused-vars
 import Input from '../components/Input';
+// eslint-disable-next-line no-unused-vars
 import Button from '../components/Button';
+import { useAuth } from '../context/AuthContext';
+import { ApiClient } from '@/utils/apiClient';
 
 export default function ApartmentAdd() {
   const [formData, setFormData] = useState({
@@ -28,6 +32,11 @@ export default function ApartmentAdd() {
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [autocompleteValue, setAutocompleteValue] = useState('');
+  const [imageFiles, setImageFiles] = useState([]);
+  const [images, setImages] = useState([]);
+
+  const { isLoggedIn } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     const apiClient = new ApiClient();
@@ -125,7 +134,15 @@ export default function ApartmentAdd() {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submission triggered');
+
+    // eslint-disable-next-line no-console
+    console.log('Form submitted:', formData);
+
+    if (!isLoggedIn) {
+      alert('Please log in to add an apartment');
+      return;
+    }
+
     setSuccess(false);
     if (validateForm()) {
       setLoading(true);
@@ -162,8 +179,8 @@ export default function ApartmentAdd() {
         submissionData.append('status', formData.status);
         submissionData.append('location', JSON.stringify(locationObject));
 
-        if (formData.images && formData.images.length > 0) {
-          formData.images.forEach((img) => submissionData.append('images', img));
+        if (imageFiles.length > 0) {
+          imageFiles.forEach((file) => submissionData.append('images', file));
         }
 
         // Debug: Log what's being sent
@@ -193,9 +210,14 @@ export default function ApartmentAdd() {
           }
         });
 
-        await apiClient.createApartment(submissionData);
+        // eslint-disable-next-line no-console
+        console.log('Uploading apartment data...');
+        const response = await apiClient.createApartment(submissionData);
 
-        setSuccess(true);
+        // eslint-disable-next-line no-console
+        console.log('Upload successful:', response.data);
+
+        // Reset form
         setFormData({
           title: '',
           description: '',
@@ -216,32 +238,18 @@ export default function ApartmentAdd() {
         });
         setAutocompleteValue('');
         setSuggestions([]);
+        setImageFiles([]);
+        setImages([]);
+
+        // Show success message
+        alert('Apartment added successfully!');
+
+        // Redirect to listings page
+        router.push('/listings');
       } catch (error) {
-        console.error('Error listing an apartment.', error.response || error);
-        console.log('Full error object:', error);
-        console.log('Error response data:', error.response?.data);
-        console.log('Error response status:', error.response?.status);
-
-        // Log the specific validation errors
-        if (error.response?.data?.details) {
-          console.log('Validation errors:', error.response.data.details);
-        }
-        if (error.response?.data?.errors) {
-          console.log('Validation errors:', error.response.data.errors);
-        }
-
-        setErrors({
-          submit:
-            (error.response?.data?.details &&
-              Array.isArray(error.response.data.details) &&
-              error.response.data.details.join(', ')) ||
-            (error.response?.data?.errors &&
-              Array.isArray(error.response.data.errors) &&
-              error.response.data.errors.join(', ')) ||
-            error.response?.data?.message ||
-            error.response?.data?.error ||
-            'Failed to list an apartment. Please try again.',
-        });
+        // eslint-disable-next-line no-console
+        console.error('Error uploading apartment:', error);
+        alert('Error uploading apartment. Please try again.');
       }
       setLoading(false);
     }
@@ -251,13 +259,58 @@ export default function ApartmentAdd() {
     if (name === 'images') {
       // Accept up to 8 images
       const selectedFiles = Array.from(files).slice(0, 8);
-      setFormData((prev) => ({ ...prev, images: selectedFiles }));
+      setImageFiles(selectedFiles);
+      setImages(selectedFiles.map((file) => URL.createObjectURL(file)));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
+  };
+  const removeImage = (index) => {
+    // eslint-disable-next-line no-console
+    console.log('Removing image at index:', index);
+
+    const newFiles = imageFiles.filter((_, i) => i !== index);
+    const newPreviews = images.filter((_, i) => i !== index);
+
+    setImageFiles(newFiles);
+    setImages(newPreviews);
+  };
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+
+    // eslint-disable-next-line no-console
+    console.log('Input change:', name, value);
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+  const handleSelectChange = (e) => {
+    const { name, value } = e.target;
+
+    // eslint-disable-next-line no-console
+    console.log('Select change:', name, value);
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+
+    // eslint-disable-next-line no-console
+    console.log('Selected files:', files);
+
+    setImageFiles(files);
+
+    // Create preview URLs
+    const previews = files.map((file) => URL.createObjectURL(file));
+    setImages(previews);
   };
   return (
     <div className="max-w-2xl mx-auto p-6">
@@ -269,7 +322,7 @@ export default function ApartmentAdd() {
             type="text"
             name="title"
             value={formData.title}
-            onChange={handleChange}
+            onChange={handleInputChange}
             placeholder="Enter a title"
             required
           />
@@ -281,7 +334,7 @@ export default function ApartmentAdd() {
             type="text"
             name="description"
             value={formData.description}
-            onChange={handleChange}
+            onChange={handleInputChange}
             placeholder="Enter a description"
             required
           />
@@ -293,7 +346,7 @@ export default function ApartmentAdd() {
             type="number"
             name="price"
             value={formData.price}
-            onChange={handleChange}
+            onChange={handleInputChange}
             placeholder="Enter a price"
             required
           />
@@ -332,7 +385,7 @@ export default function ApartmentAdd() {
             type="text"
             name="street"
             value={formData.street}
-            onChange={handleChange}
+            onChange={handleInputChange}
             placeholder="Enter street"
             required
           />
@@ -344,7 +397,7 @@ export default function ApartmentAdd() {
             type="text"
             name="city"
             value={formData.city}
-            onChange={handleChange}
+            onChange={handleInputChange}
             placeholder="Enter city"
             required
           />
@@ -356,7 +409,7 @@ export default function ApartmentAdd() {
             type="text"
             name="state"
             value={formData.state}
-            onChange={handleChange}
+            onChange={handleInputChange}
             placeholder="Enter state"
             required
           />
@@ -368,7 +421,7 @@ export default function ApartmentAdd() {
             type="text"
             name="zipCode"
             value={formData.zipCode}
-            onChange={handleChange}
+            onChange={handleInputChange}
             placeholder="Enter zip code"
             required
           />
@@ -380,7 +433,7 @@ export default function ApartmentAdd() {
             type="text"
             name="country"
             value={formData.country}
-            onChange={handleChange}
+            onChange={handleInputChange}
             placeholder="Enter country"
             required
           />
@@ -393,7 +446,7 @@ export default function ApartmentAdd() {
             type="number"
             name="bedrooms"
             value={formData.bedrooms}
-            onChange={handleChange}
+            onChange={handleInputChange}
             placeholder="Enter number of bedrooms"
             required
           />
@@ -405,7 +458,7 @@ export default function ApartmentAdd() {
             type="number"
             name="bathrooms"
             value={formData.bathrooms}
-            onChange={handleChange}
+            onChange={handleInputChange}
             placeholder="Enter number of bathrooms"
             required
           />
@@ -417,7 +470,7 @@ export default function ApartmentAdd() {
             type="number"
             name="area"
             value={formData.area}
-            onChange={handleChange}
+            onChange={handleInputChange}
             placeholder="Enter an area"
             required
           />
@@ -429,7 +482,7 @@ export default function ApartmentAdd() {
             type="text"
             name="amenities"
             value={formData.amenities}
-            onChange={handleChange}
+            onChange={handleInputChange}
             placeholder="Enter the amenities"
             required
           />
@@ -445,7 +498,7 @@ export default function ApartmentAdd() {
             name="images"
             multiple
             accept="image/*"
-            onChange={handleChange}
+            onChange={handleImageChange}
             className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
           />
           {errors.images && <p className="text-red-500 text-xs mt-1">{errors.images}</p>}
@@ -456,7 +509,7 @@ export default function ApartmentAdd() {
             type="text"
             name="status"
             value={formData.status}
-            onChange={handleChange}
+            onChange={handleInputChange}
             placeholder="Enter status (available, rented, pending)"
             required
           />

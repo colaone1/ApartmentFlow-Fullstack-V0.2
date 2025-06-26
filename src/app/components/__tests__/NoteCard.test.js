@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
+// eslint-disable-next-line no-unused-vars
 import NoteCard from '../NoteCard';
 
 // Mock the note data
@@ -8,7 +9,7 @@ const mockNote = {
   content: 'This is a test note content',
   category: 'general',
   priority: 'medium',
-  createdAt: '2024-01-01T00:00:00.000Z'
+  createdAt: '2024-01-01T00:00:00.000Z',
 };
 
 // Mock the handlers
@@ -21,13 +22,7 @@ describe('NoteCard', () => {
   });
 
   test('renders note information correctly', () => {
-    render(
-      <NoteCard 
-        note={mockNote} 
-        onEdit={mockOnEdit} 
-        onDelete={mockOnDelete} 
-      />
-    );
+    render(<NoteCard note={mockNote} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     expect(screen.getByText('Test Note')).toBeInTheDocument();
     expect(screen.getByText('This is a test note content')).toBeInTheDocument();
@@ -36,13 +31,7 @@ describe('NoteCard', () => {
   });
 
   test('calls onEdit when edit button is clicked', () => {
-    render(
-      <NoteCard 
-        note={mockNote} 
-        onEdit={mockOnEdit} 
-        onDelete={mockOnDelete} 
-      />
-    );
+    render(<NoteCard note={mockNote} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     const editButton = screen.getByText('Edit');
     fireEvent.click(editButton);
@@ -55,16 +44,10 @@ describe('NoteCard', () => {
     window.confirm = jest.fn(() => true);
     mockOnDelete.mockResolvedValue(undefined);
 
-    render(
-      <NoteCard 
-        note={mockNote} 
-        onEdit={mockOnEdit} 
-        onDelete={mockOnDelete} 
-      />
-    );
+    render(<NoteCard note={mockNote} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     const deleteButton = screen.getByText('Delete');
-    
+
     await act(async () => {
       fireEvent.click(deleteButton);
     });
@@ -77,13 +60,7 @@ describe('NoteCard', () => {
     // Mock window.confirm to return false
     window.confirm = jest.fn(() => false);
 
-    render(
-      <NoteCard 
-        note={mockNote} 
-        onEdit={mockOnEdit} 
-        onDelete={mockOnDelete} 
-      />
-    );
+    render(<NoteCard note={mockNote} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     const deleteButton = screen.getByText('Delete');
     fireEvent.click(deleteButton);
@@ -94,12 +71,7 @@ describe('NoteCard', () => {
 
   test('renders edit form when isEditing is true', () => {
     render(
-      <NoteCard 
-        note={mockNote} 
-        onEdit={mockOnEdit} 
-        onDelete={mockOnDelete} 
-        isEditing={true}
-      />
+      <NoteCard note={mockNote} onEdit={mockOnEdit} onDelete={mockOnDelete} isEditing={true} />
     );
 
     expect(screen.getByDisplayValue('Test Note')).toBeInTheDocument();
@@ -107,4 +79,4 @@ describe('NoteCard', () => {
     expect(screen.getByText('Save')).toBeInTheDocument();
     expect(screen.getByText('Cancel')).toBeInTheDocument();
   });
-}); 
+});

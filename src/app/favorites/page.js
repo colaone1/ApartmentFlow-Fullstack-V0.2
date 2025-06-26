@@ -1,27 +1,34 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { ApiClient } from '@/utils/apiClient';
+import { useAuth } from '../context/AuthContext';
+// eslint-disable-next-line no-unused-vars
 import ListingCard from '../components/ListingCard';
+import { ApiClient } from '@/utils/apiClient';
 
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const apiClient = new ApiClient();
+  const { isLoggedIn } = useAuth();
 
   useEffect(() => {
     const fetchFavorites = async () => {
+      if (!isLoggedIn) return;
+
       try {
+        // eslint-disable-next-line no-console
+        console.log('Fetching favorites...');
         const response = await apiClient.getFavorites();
         setFavorites(response.data.favorites);
       } catch (error) {
-        console.error('Error loading favorites:', error);
+        console.error('Error fetching favorites:', error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchFavorites();
-  }, []);
+  }, [isLoggedIn]);
 
   if (loading) return <p>Loading your favorites...</p>;
   if (favorites.length === 0) return <p>No favorite apartments yet.</p>;

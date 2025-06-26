@@ -1,46 +1,44 @@
-"use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/context/AuthContext";
-import Input from "../../components/Input";
-import Button from "../../components/Button";
-import Link from "next/link";
-
+'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/app/context/AuthContext';
+// eslint-disable-next-line no-unused-vars
+import Input from '../../components/Input';
+// eslint-disable-next-line no-unused-vars
+import Button from '../../components/Button';
+// eslint-disable-next-line no-unused-vars
+import Link from 'next/link';
 
 export default function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
+  const [form, setForm] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
-    setError("");
+    setError('');
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.email || !form.password) {
-      setError("You must fill in both email and password to continue.");
+      setError('You must fill in both email and password to continue.');
       return;
     }
     setLoading(true);
     try {
-      const response = await login(form.email, form.password);
-
-      if (response.data && response.data.token) {
-        router.push("/listings");
-      } else {
-        setError("Login successful but no token received");}
-      } catch (err) {
-        console.error("Login error:", err.response || err);
-        setError(err.response?.data?.message || "Email or password is incorrect.");
-      } finally {
-        setLoading(false);
-      }
+      // eslint-disable-next-line no-console
+      console.log('Login attempt for:', form.email);
+      await login(form.email, form.password);
+      router.push('/listings');
+    } catch (error) {
+      setError('Invalid email or password');
+    } finally {
+      setLoading(false);
     }
-  
+  };
 
   return (
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded shadow">
@@ -64,18 +62,15 @@ export default function Login() {
           placeholder="••••••••"
           required
         />
-          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-        <Button type="submit">
-          {loading ? 'Logging in...' : 'Login'}
-        </Button>
-        
-        <p className="mt-4 text-center text-sm text-[var(--color-primary)]">
-          Don't have an account?{" "}
-        <Link href="/auth/register" className="underline hover:text-[var(--color-accent)]">
-           Create an account
-         </Link>
-         </p>
+        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+        <Button type="submit">{loading ? 'Logging in...' : 'Login'}</Button>
 
+        <p className="mt-4 text-center text-sm text-[var(--color-primary)]">
+          Don't have an account?{' '}
+          <Link href="/auth/register" className="underline hover:text-[var(--color-accent)]">
+            Create an account
+          </Link>
+        </p>
       </form>
     </div>
   );

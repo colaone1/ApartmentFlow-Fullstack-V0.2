@@ -1,9 +1,9 @@
-import Sidebar from "../components/Sidebar";
+import Sidebar from '../components/Sidebar';
 
 export default function ListingsLayout({ children }) {
   return (
     <div className="flex">
-      <Sidebar/>
+      <Sidebar />
       <main className=" w-full p-6">{children}</main>
     </div>
   );

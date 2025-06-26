@@ -1,8 +1,9 @@
 'use client';
-import { ApiClient } from '@/utils/apiClient';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/app/context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
+// eslint-disable-next-line no-unused-vars
+import { ApiClient } from '@/utils/apiClient';
 
 export default function Register() {
   const [registrationForm, setRegistrationForm] = useState({
@@ -27,21 +28,21 @@ export default function Register() {
       return;
     }
     setLoading(true);
+    setError('');
+
+    if (registrationForm.password !== registrationForm.confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const apiClient = new ApiClient();
-      const response = await register(
-        registrationForm.name,
-        registrationForm.email,
-        registrationForm.password
-      );
-      if (response.data && response.data.token) {
-        router.push('/listings');
-      } else {
-        setError('Registered successfully but no token received.');
-      }
-    } catch (err) {
-      console.error('Register error:', err.response || err);
-      setError(err.response?.data?.message || 'Invalid credentials.');
+      // eslint-disable-next-line no-console
+      console.log('Registration attempt for:', registrationForm.email);
+      await register(registrationForm.name, registrationForm.email, registrationForm.password);
+      router.push('/listings');
+    } catch (error) {
+      setError('Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -79,6 +80,17 @@ export default function Register() {
             type="password"
             name="password"
             value={registrationForm.password}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Confirm Password</label>
+          <input
+            type="password"
+            name="confirmPassword"
+            value={registrationForm.confirmPassword}
             onChange={handleChange}
             className="w-full p-2 border rounded"
             required

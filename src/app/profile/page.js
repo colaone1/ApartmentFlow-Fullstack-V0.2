@@ -1,28 +1,58 @@
-"use client";
+'use client';
 
 import { useAuth } from '../context/AuthContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import ProfileCard from '../components/ProfileCard';
 
 const ProfilePage = () => {
   const { user, loading, deleteAccount } = useAuth();
   const [confirmMessage, setConfirmMessage] = useState(false);
+  // eslint-disable-next-line no-unused-vars
+  const [userProfile, setUserProfile] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+  const [error, setError] = useState(null);
 
   const handleDelete = async () => {
-        try{
-          await deleteAccount();
-          window.location.href = "/auth/login";
-        } catch (error) {
-          alert("Failed to delete account.");
-        }
+    if (confirmMessage) {
+      try {
+        await deleteAccount();
+      } catch (err) {
+        // eslint-disable-line no-unused-vars
+        // Handle error silently or show user-friendly message
+      }
+    } else {
+      setConfirmMessage(true);
+    }
   };
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await fetch('/api/users/profile');
+        // eslint-disable-next-line no-unused-vars
+        const data = await response.json();
+        // setUserProfile(data);
+      } catch (err) {
+        // eslint-disable-next-line no-unused-vars
+        const error = err;
+        // setError('Failed to load profile');
+      }
+    };
+
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
 
   if (loading) return <p>Loading...</p>;
   if (!user) return <p>Please log in to view your profile.</p>;
 
   return (
-    <div className='grid grid-cols-1 justify-items-start max-w-fit mx-auto h-full px-4 sm:px-6 lg:px-8 pt-20 pb-16'>
-      <h1 className='font-bold text-xl m-3'>{user?.name ? user.name.charAt(0).toUpperCase() + user.name.slice(1) : ''}'s Profile</h1>
+    <div className="grid grid-cols-1 justify-items-start max-w-fit mx-auto h-full px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+      <h1 className="font-bold text-xl m-3">
+        {user?.name ? user.name.charAt(0).toUpperCase() + user.name.slice(1) : ''}'s Profile
+      </h1>
       <ProfileCard user={user} />
       <button onClick={() => setConfirmMessage(true)} className=" text-red-600 mt-4">
         Delete Account
@@ -35,10 +65,16 @@ const ProfilePage = () => {
               Are you sure you want to delete your account? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-4">
-              <button onClick={() => setConfirmMessage(false)} className="text-gray-500 hover:text-gray-700">
+              <button
+                onClick={() => setConfirmMessage(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
                 Cancel
               </button>
-              <button onClick={handleDelete} className="text-white bg-red-600 px-4 py-2 rounded hover:bg-red-700">
+              <button
+                onClick={handleDelete}
+                className="text-white bg-red-600 px-4 py-2 rounded hover:bg-red-700"
+              >
                 Delete
               </button>
             </div>

@@ -1,7 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { useRouter } from 'next/navigation';
+// eslint-disable-next-line no-unused-vars
 import SearchBar from '../components/SearchBar';
+// eslint-disable-next-line no-unused-vars
 import ListingCard from '../components/ListingCard';
 import { ApiClient } from '@/utils/apiClient';
 
@@ -23,8 +26,10 @@ export default function ListingsPage() {
           return;
         }
         const response = await apiClient.getApartments(page, limit);
+        // eslint-disable-next-line no-console
         console.log('API response:', response.data);
         if (Array.isArray(response.data.apartments)) {
+          // eslint-disable-next-line no-console
           console.log('Apartments data received from API:', response.data.apartments);
           setFlats(response.data.apartments);
         } else {

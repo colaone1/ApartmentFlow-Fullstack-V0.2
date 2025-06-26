@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+// eslint-disable-next-line no-unused-vars
 import FavoriteButton from '../FavoriteButton';
 
 describe('FavoriteButton', () => {
@@ -15,4 +16,4 @@ describe('FavoriteButton', () => {
     fireEvent.click(button);
     expect(button).toHaveTextContent('🤍');
   });
-}); 
+});

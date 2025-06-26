@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+// eslint-disable-next-line no-unused-vars
 import SearchBar from '../SearchBar';
 
 describe('SearchBar', () => {

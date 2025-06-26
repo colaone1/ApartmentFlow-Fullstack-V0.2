@@ -34,6 +34,7 @@ export const AuthProvider = ({ children }) => {
           const response = await apiClient.getProfile();
           setUser(response.data);
         } catch (err) {
+          // eslint-disable-next-line no-console
           console.error('Failed to fetch user profile:', err);
           setUser(null);
           setIsLoggedIn(false);
@@ -58,9 +59,16 @@ export const AuthProvider = ({ children }) => {
     return response;
   };
   const logout = async () => {
-    await apiClient.logout();
-    setIsLoggedIn(false);
-    setUser(null);
+    try {
+      // eslint-disable-next-line no-console
+      console.log('Logging out user');
+      setUser(null);
+      setIsLoggedIn(false);
+      apiClient.removeToken();
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error during logout:', error);
+    }
   };
   const deleteAccount = async () => {
     try {

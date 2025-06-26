@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+// eslint-disable-next-line no-unused-vars
 import Dropdown from '../Dropdown';
+// eslint-disable-next-line no-unused-vars
 import { AuthProvider } from '../../context/AuthContext';
 
 // Mock the ApiClient

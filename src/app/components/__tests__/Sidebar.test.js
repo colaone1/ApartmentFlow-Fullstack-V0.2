@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+// eslint-disable-next-line no-unused-vars
 import Sidebar from '../Sidebar';
 
 describe('Sidebar', () => {

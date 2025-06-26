@@ -1,8 +1,11 @@
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 
+// eslint-disable-next-line no-unused-vars
 import Header from './components/Header';
+// eslint-disable-next-line no-unused-vars
 import Sidebar from './components/Sidebar';
+// eslint-disable-next-line no-unused-vars
 import { AuthProvider } from './context/AuthContext';
 
 // AI-OPTIMIZED: Font optimization with display swap

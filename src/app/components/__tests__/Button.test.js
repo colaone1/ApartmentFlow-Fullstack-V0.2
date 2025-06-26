@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+// eslint-disable-next-line no-unused-vars
 import Button from '../Button';
 
 describe('Button', () => {
@@ -23,4 +24,4 @@ describe('Button', () => {
     expect(button).toHaveClass('py-2');
     expect(button).toHaveClass('rounded');
   });
-}); 
+});

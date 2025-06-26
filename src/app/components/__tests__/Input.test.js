@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+// eslint-disable-next-line no-unused-vars
 import Input from '../Input';
 
 describe('Input', () => {

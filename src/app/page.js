@@ -1,8 +1,11 @@
 'use client';
+// eslint-disable-next-line no-unused-vars
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { usePerformanceMonitor } from '../utils/performance';
+// eslint-disable-next-line no-unused-vars
 import ErrorBoundary from './components/ErrorBoundary';
+import { useAuth } from './context/AuthContext';
 
 // AI-OPTIMIZED: Home page component with performance monitoring
 export default function Home() {

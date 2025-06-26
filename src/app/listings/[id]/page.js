@@ -1,9 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+// eslint-disable-next-line no-unused-vars
 import Image from 'next/image';
 import { ApiClient } from '@/utils/apiClient';
+// eslint-disable-next-line no-unused-vars
 import NoteCard from '../../components/NoteCard';
+// eslint-disable-next-line no-unused-vars
 import NotesFilter from '../../components/NotesFilter';
 
 export default function ApartmentDetailPage() {
@@ -42,11 +45,17 @@ export default function ApartmentDetailPage() {
           return;
         }
 
+        // eslint-disable-next-line no-console
+        console.log('Fetching apartment details for ID:', params.id);
         const response = await apiClient.getApartment(params.id);
         setApartment(response.data);
 
         // Fetch notes for this apartment
+        // eslint-disable-next-line no-console
+        console.log('Fetching notes for apartment:', params.id);
         const notesResponse = await apiClient.getNotes({ apartmentId: params.id });
+        // eslint-disable-next-line no-console
+        console.log('Notes fetched:', notesResponse.data);
         setNotes(notesResponse.data || []);
 
         // Check if apartment is in user's favorites
@@ -54,6 +63,8 @@ export default function ApartmentDetailPage() {
         const isFav = favoritesResponse.data?.some((fav) => fav.apartment === params.id);
         setIsFavorite(isFav);
       } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Error fetching apartment:', err);
         setError(err.response?.data?.message || 'Failed to fetch apartment details');
       } finally {
         setLoading(false);
@@ -68,6 +79,8 @@ export default function ApartmentDetailPage() {
   const handleAddNote = async (e) => {
     e.preventDefault();
     try {
+      // eslint-disable-next-line no-console
+      console.log('Adding note:', newNote);
       const apiClient = new ApiClient();
       const response = await apiClient.createNote({
         apartmentId: params.id,
@@ -79,7 +92,8 @@ export default function ApartmentDetailPage() {
       setShowNoteForm(false);
       setMessage('Note added successfully!');
     } catch (err) {
-      console.error('Failed to add note:', err);
+      // eslint-disable-next-line no-console
+      console.error('Error adding note:', err);
       alert('Failed to add note. Please try again.');
     }
   };
@@ -97,6 +111,7 @@ export default function ApartmentDetailPage() {
       setNotes(notes.map((note) => (note._id === noteId ? response.data : note)));
       setEditingNoteId(null);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('Failed to update note:', err);
       alert('Failed to update note. Please try again.');
     }
@@ -109,6 +124,7 @@ export default function ApartmentDetailPage() {
 
       setNotes(notes.filter((note) => note._id !== noteId));
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('Failed to delete note:', err);
       alert('Failed to delete note. Please try again.');
     }
@@ -124,6 +140,7 @@ export default function ApartmentDetailPage() {
       }
       setIsFavorite(!isFavorite);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('Failed to toggle favorite:', err);
     }
   };

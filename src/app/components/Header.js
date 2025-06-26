@@ -1,8 +1,9 @@
-"use client";
-import Link from "next/link";
-import Image from "next/image";
-import Dropdown from "./Dropdown";
-import { useState } from "react";
+'use client';
+import Link from 'next/link';
+import Image from 'next/image';
+import Dropdown from './Dropdown';
+import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -10,15 +11,15 @@ export default function Header() {
   return (
     <header className="bg-[var(--color-secondary)] text-white px-6 py-1 flex justify-between items-center">
       <div className="w-[120px] md:w-[200px]">
-         <Image 
-           src="/images/logo.png" 
-           alt="ApartmentsFlow logo" 
-           width={200} 
-           height={50} 
-           priority 
-           style={{ width: 'auto', height: 'auto' }}
-         />
-       </div>
+        <Image
+          src="/images/logo.png"
+          alt="ApartmentsFlow logo"
+          width={200}
+          height={50}
+          priority
+          style={{ width: 'auto', height: 'auto' }}
+        />
+      </div>
       <nav className="hidden md:flex space-x-6 text-xl font-semibold items-center">
         <Link href="/" className="hover:text-[var(--color-primary)]">
           Home
@@ -35,17 +36,15 @@ export default function Header() {
         <Dropdown />
       </nav>
 
-      
       <div className="relative md:hidden">
         <button
           className="text-3xl"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle menu"
         >
-          {menuOpen ? "✖" : "☰"}
+          {menuOpen ? '✖' : '☰'}
         </button>
 
-       
         {menuOpen && (
           <nav className="absolute right-0 mt-2 w-48 bg-[var(--color-secondary)] rounded-md border-1 border-solid border-[var(--color-primary)] shadow-lg z-50">
             <ul className="flex flex-col text-xl font-semibold">
