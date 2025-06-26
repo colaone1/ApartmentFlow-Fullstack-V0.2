@@ -34,6 +34,7 @@ export default function ApartmentAdd() {
   const [autocompleteValue, setAutocompleteValue] = useState('');
   const [imageFiles, setImageFiles] = useState([]);
   const [images, setImages] = useState([]);
+  const [feedback, setFeedback] = useState({ message: '', type: '' });
 
   const { isLoggedIn } = useAuth();
   const router = useRouter();
@@ -134,28 +135,26 @@ export default function ApartmentAdd() {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    setFeedback({ message: '', type: '' });
     // eslint-disable-next-line no-console
     console.log('Form submitted:', formData);
-
     if (!isLoggedIn) {
-      alert('Please log in to add an apartment');
+      setFeedback({ message: 'Please log in to add an apartment', type: 'error' });
       return;
     }
-
+    if (imageFiles.length > 8) {
+      setFeedback({ message: 'You can upload a maximum of 8 images.', type: 'error' });
+      return;
+    }
     setSuccess(false);
     if (validateForm()) {
       setLoading(true);
       try {
         const apiClient = new ApiClient();
-
-        // Check if user is logged in
         if (!apiClient.isLoggedIn()) {
           window.location.href = '/auth/unauthorized';
           return;
         }
-
-        // Construct the location object as expected by the backend
         const locationObject = {
           coordinates: [parseFloat(formData.longitude), parseFloat(formData.latitude)],
           address: {
@@ -166,8 +165,6 @@ export default function ApartmentAdd() {
             country: formData.country,
           },
         };
-
-        // Create FormData for file upload
         const submissionData = new FormData();
         submissionData.append('title', formData.title);
         submissionData.append('description', formData.description);
@@ -178,78 +175,59 @@ export default function ApartmentAdd() {
         submissionData.append('amenities', formData.amenities);
         submissionData.append('status', formData.status);
         submissionData.append('location', JSON.stringify(locationObject));
-
         if (imageFiles.length > 0) {
           imageFiles.forEach((file) => submissionData.append('images', file));
         }
-
         // Debug: Log what's being sent
-        console.log('Form data being sent:', {
-          title: formData.title,
-          description: formData.description,
-          price: formData.price,
-          bedrooms: formData.bedrooms,
-          bathrooms: formData.bathrooms,
-          area: formData.area,
-          amenities: formData.amenities,
-          status: formData.status,
-          street: formData.street,
-          city: formData.city,
-          state: formData.state,
-          zipCode: formData.zipCode,
-          country: formData.country,
-          latitude: formData.latitude,
-          longitude: formData.longitude,
-        });
-
-        // Debug: Log the actual FormData entries
-        console.log('FormData entries:');
-        Object.entries(formData).forEach(([key, value]) => {
-          if (value !== '' && value !== null && value !== undefined) {
-            console.log(`${key}: ${value}`);
-          }
-        });
-
+        console.log('Form data being sent:', { ...formData });
         // eslint-disable-next-line no-console
         console.log('Uploading apartment data...');
         const response = await apiClient.createApartment(submissionData);
-
         // eslint-disable-next-line no-console
-        console.log('Upload successful:', response.data);
-
-        // Reset form
-        setFormData({
-          title: '',
-          description: '',
-          price: '',
-          latitude: '',
-          longitude: '',
-          street: '',
-          city: '',
-          state: '',
-          zipCode: '',
-          country: '',
-          bedrooms: '',
-          bathrooms: '',
-          area: '',
-          amenities: '',
-          images: [],
-          status: '',
-        });
-        setAutocompleteValue('');
-        setSuggestions([]);
-        setImageFiles([]);
-        setImages([]);
-
-        // Show success message
-        alert('Apartment added successfully!');
-
-        // Redirect to listings page
-        router.push('/listings');
+        console.log('Upload response:', response.data);
+        if (
+          response.data &&
+          (response.status === 200 || response.status === 201) &&
+          !response.data.error
+        ) {
+          setFeedback({ message: 'Apartment added successfully!', type: 'success' });
+          // Reset form
+          setFormData({
+            title: '',
+            description: '',
+            price: '',
+            latitude: '',
+            longitude: '',
+            street: '',
+            city: '',
+            state: '',
+            zipCode: '',
+            country: '',
+            bedrooms: '',
+            bathrooms: '',
+            area: '',
+            amenities: '',
+            images: [],
+            status: '',
+          });
+          setAutocompleteValue('');
+          setSuggestions([]);
+          setImageFiles([]);
+          setImages([]);
+          setTimeout(() => router.push('/listings'), 1500);
+        } else {
+          setFeedback({
+            message: response.data?.error || 'Error uploading apartment. Please try again.',
+            type: 'error',
+          });
+        }
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error uploading apartment:', error);
-        alert('Error uploading apartment. Please try again.');
+        setFeedback({
+          message: error?.response?.data?.error || 'Error uploading apartment. Please try again.',
+          type: 'error',
+        });
       }
       setLoading(false);
     }
@@ -315,6 +293,18 @@ export default function ApartmentAdd() {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-3xl font-bold text-[var(--color-primary)] mb-8">List An Apartment</h1>
+      {/* Feedback message */}
+      {feedback.message && (
+        <div
+          className={`mb-4 p-3 rounded text-center ${
+            feedback.type === 'success'
+              ? 'bg-green-100 text-green-700 border border-green-300'
+              : 'bg-red-100 text-red-700 border border-red-300'
+          }`}
+        >
+          {feedback.message}
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <Input
