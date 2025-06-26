@@ -13,7 +13,7 @@ const mockApiClient = {
   removeToken: jest.fn(),
 };
 
-jest.mock('../../../../apiClient/apiClient', () => ({
+jest.mock('../../../utils/apiClient', () => ({
   ApiClient: jest.fn().mockImplementation(() => mockApiClient),
 }));
 

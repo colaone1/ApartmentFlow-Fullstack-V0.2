@@ -5,13 +5,22 @@
   "license": "Apache-2.0",
   "scripts": {
     "dev": "next dev",
+    "dev:full": "concurrently \"npm run dev\" \"cd backend && npm run dev\"",
+    "dev:force": "concurrently \"npm run dev\" \"cd backend && npm run dev:force\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "prepare": "husky install"
+    "test:all": "npm test && cd backend && npm test",
+    "clean": "rm -rf .next node_modules/.cache && cd backend && rm -rf node_modules/.cache",
+    "clean:full": "rm -rf .next node_modules package-lock.json && cd backend && rm -rf node_modules package-lock.json && npm install && cd backend && npm install",
+    "prepare": "husky install",
+    "performance:monitor": "cd backend && npm run performance:monitor",
+    "cache:stats": "cd backend && npm run cache:stats",
+    "load:test": "cd backend && npm run load:test"
   },
   "lint-staged": {
     "src/**/*.{js,jsx,ts,tsx}": [
@@ -34,6 +43,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "concurrently": "^8.2.2",
     "eslint": "^9.29.0",
     "eslint-config-next": "^15.3.4",
     "globals": "^16.2.0",

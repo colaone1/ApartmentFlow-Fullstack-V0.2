@@ -3,16 +3,15 @@ import { AuthProvider, useAuth } from '../AuthContext';
 
 // Mock the ApiClient
 const mockApiClient = {
-  isLoggedIn: jest.fn(),
-  getProfile: jest.fn(),
   login: jest.fn(),
-  logout: jest.fn(),
   register: jest.fn(),
-  setToken: jest.fn(),
-  removeToken: jest.fn(),
+  logout: jest.fn(),
+  getProfile: jest.fn(),
+  removeProfile: jest.fn(),
+  isLoggedIn: jest.fn(),
 };
 
-jest.mock('../../../../apiClient/apiClient', () => ({
+jest.mock('../../../utils/apiClient', () => ({
   ApiClient: jest.fn().mockImplementation(() => mockApiClient),
 }));
 

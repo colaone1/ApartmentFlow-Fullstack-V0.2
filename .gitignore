@@ -99,3 +99,12 @@ backend/uploads/
 *.dump
 *.bak
 *.sql
+
+# Ignore all markdown files by default
+*.md
+
+# But do NOT ignore these essential files for marking
+!README.md
+!GRADE_ASSESSMENT.md
+!FINAL_ACTION_PLAN.md
+!TESTING_TROUBLESHOOTING.md
