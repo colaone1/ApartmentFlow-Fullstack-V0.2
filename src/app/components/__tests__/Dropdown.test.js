@@ -16,7 +16,8 @@ const mockApiClient = {
 };
 
 jest.mock('../../../utils/apiClient', () => ({
-  ApiClient: jest.fn().mockImplementation(() => mockApiClient),
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => mockApiClient),
 }));
 
 // Mock Next.js router
