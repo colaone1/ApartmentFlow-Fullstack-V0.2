@@ -130,25 +130,33 @@ if (require.main === module) {
 
   switch (command) {
     case 'start':
-      const interval = parseInt(args[1]) || 30000;
-      cacheStats.startMonitoring(interval);
+      {
+        const interval = parseInt(args[1]) || 30000;
+        cacheStats.startMonitoring(interval);
+      }
       break;
 
     case 'report':
-      cacheStats.generateReport();
+      {
+        cacheStats.generateReport();
+      }
       break;
 
     case 'collect':
-      cacheStats.collectStats().then(() => {
-        cacheStats.generateReport();
-        process.exit(0);
-      });
+      {
+        cacheStats.collectStats().then(() => {
+          cacheStats.generateReport();
+          process.exit(0);
+        });
+      }
       break;
 
     case 'flush':
-      cacheStats.flushCache().then(() => {
-        process.exit(0);
-      });
+      {
+        cacheStats.flushCache().then(() => {
+          process.exit(0);
+        });
+      }
       break;
 
     case 'memory':
@@ -163,12 +171,14 @@ if (require.main === module) {
       break;
 
     default:
-      console.log('Usage:');
-      console.log('  node cache-stats.js start [interval_ms]  - Start continuous monitoring');
-      console.log('  node cache-stats.js report               - Generate report from logs');
-      console.log('  node cache-stats.js collect              - Collect single stats snapshot');
-      console.log('  node cache-stats.js flush                - Flush all cache data');
-      console.log('  node cache-stats.js memory               - Display memory usage');
+      {
+        console.log('Usage:');
+        console.log('  node cache-stats.js start [interval_ms]  - Start continuous monitoring');
+        console.log('  node cache-stats.js report               - Generate report from logs');
+        console.log('  node cache-stats.js collect              - Collect single stats snapshot');
+        console.log('  node cache-stats.js flush                - Flush all cache data');
+        console.log('  node cache-stats.js memory               - Display memory usage');
+      }
       break;
   }
 }

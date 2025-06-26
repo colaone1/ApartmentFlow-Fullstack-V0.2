@@ -125,19 +125,25 @@ if (require.main === module) {
 
   switch (command) {
     case 'start':
-      const interval = parseInt(args[1]) || 60000;
-      monitor.startMonitoring(interval);
+      {
+        const interval = parseInt(args[1]) || 60000;
+        monitor.startMonitoring(interval);
+      }
       break;
 
     case 'report':
-      monitor.generateReport();
+      {
+        monitor.generateReport();
+      }
       break;
 
     case 'collect':
-      monitor.collectMetrics().then(() => {
-        monitor.generateReport();
-        process.exit(0);
-      });
+      {
+        monitor.collectMetrics().then(() => {
+          monitor.generateReport();
+          process.exit(0);
+        });
+      }
       break;
 
     case 'memory':
@@ -152,14 +158,16 @@ if (require.main === module) {
       break;
 
     default:
-      console.log('Usage:');
-      console.log(
-        '  node performance-monitor.js start [interval_ms]  - Start continuous monitoring'
-      );
-      console.log('  node performance-monitor.js report               - Generate report from logs');
-      console.log(
-        '  node performance-monitor.js collect              - Collect single metrics snapshot'
-      );
+      {
+        console.log('Usage:');
+        console.log(
+          '  node performance-monitor.js start [interval_ms]  - Start continuous monitoring'
+        );
+        console.log('  node performance-monitor.js report               - Generate report from logs');
+        console.log(
+          '  node performance-monitor.js collect              - Collect single metrics snapshot'
+        );
+      }
       break;
   }
 }
