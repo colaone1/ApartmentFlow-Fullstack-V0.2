@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/app/context/AuthContext';
 // eslint-disable-next-line no-unused-vars
 import ListingCard from '../components/ListingCard';
-import { ApiClient } from '@/utils/apiClient';
+import ApiClient from '@/utils/apiClient';
 
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState([]);

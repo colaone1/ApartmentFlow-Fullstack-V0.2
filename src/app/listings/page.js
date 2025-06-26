@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import SearchBar from '../components/SearchBar';
 // eslint-disable-next-line no-unused-vars
 import ListingCard from '../components/ListingCard';
-import { ApiClient } from '@/utils/apiClient';
+import ApiClient from '@/utils/apiClient';
 
 export default function ListingsPage() {
   const [search, setSearch] = useState('');

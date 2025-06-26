@@ -2,20 +2,13 @@
 // eslint-disable-next-line no-unused-vars
 import Link from 'next/link';
 import { useEffect } from 'react';
-import { usePerformanceMonitor } from '../utils/performance';
 // eslint-disable-next-line no-unused-vars
 import ErrorBoundary from './components/ErrorBoundary';
 import { useAuth } from './context/AuthContext';
 
 // AI-OPTIMIZED: Home page component with performance monitoring
 export default function Home() {
-  const { startRender, endRender } = usePerformanceMonitor('HomePage');
-
-  // AI-OPTIMIZED: Performance monitoring
-  useEffect(() => {
-    const startTime = startRender();
-    return () => endRender(startTime);
-  }, [startRender, endRender]);
+  // AI-OPTIMIZED: Performance monitoring temporarily disabled for debugging
 
   return (
     <ErrorBoundary>

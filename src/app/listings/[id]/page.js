@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 // eslint-disable-next-line no-unused-vars
 import Image from 'next/image';
-import { ApiClient } from '@/utils/apiClient';
+import ApiClient from '@/utils/apiClient';
 // eslint-disable-next-line no-unused-vars
 import NoteCard from '../../components/NoteCard';
 // eslint-disable-next-line no-unused-vars

@@ -1,6 +1,6 @@
 'use client';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { ApiClient } from '@/utils/apiClient';
+import ApiClient from '@/utils/apiClient';
 
 const AuthContext = createContext();
 

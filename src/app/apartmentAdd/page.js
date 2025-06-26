@@ -6,7 +6,7 @@ import Input from '../components/Input';
 // eslint-disable-next-line no-unused-vars
 import Button from '../components/Button';
 import { useAuth } from '../context/AuthContext';
-import { ApiClient } from '@/utils/apiClient';
+import ApiClient from '@/utils/apiClient';
 
 export default function ApartmentAdd() {
   const [formData, setFormData] = useState({

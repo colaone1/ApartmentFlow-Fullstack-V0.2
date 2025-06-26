@@ -1,9 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../context/AuthContext';
-// eslint-disable-next-line no-unused-vars
-import { ApiClient } from '@/utils/apiClient';
+import { useAuth } from '@/app/context/AuthContext';
+import ApiClient from '@/utils/apiClient';
 
 export default function Register() {
   const [registrationForm, setRegistrationForm] = useState({

@@ -1,12 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '@/app/context/AuthContext';
 // eslint-disable-next-line no-unused-vars
-import Input from '../../components/Input';
+import Input from '@/app/components/Input';
 // eslint-disable-next-line no-unused-vars
-import Button from '../../components/Button';
-import { ApiClient } from '@/utils/apiClient';
+import Button from '@/app/components/Button';
+import ApiClient from '@/utils/apiClient';
 
 const edit = () => {
   const { user, setUser } = useAuth();
