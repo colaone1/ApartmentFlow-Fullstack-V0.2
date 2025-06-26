@@ -60,7 +60,7 @@ app.get('/404', function (req, res, next) {
 
 app.get('/403', function (req, res, next) {
   // trigger a 403 error
-  var err = new Error('not allowed!');
+  const err = new Error('not allowed!');
   err.status = 403;
   next(err);
 });
