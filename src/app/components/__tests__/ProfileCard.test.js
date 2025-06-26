@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react'
-import ProfileCard from '../ProfileCard'
-import { AuthProvider } from '../../context/AuthContext'
+import { render, screen } from '@testing-library/react';
+import ProfileCard from '../ProfileCard';
+import { AuthProvider } from '../../context/AuthContext';
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
@@ -12,128 +12,123 @@ jest.mock('next/navigation', () => ({
       back: jest.fn(),
       forward: jest.fn(),
       refresh: jest.fn(),
-    }
+    };
   },
   useSearchParams() {
-    return new URLSearchParams()
+    return new URLSearchParams();
   },
   usePathname() {
-    return '/'
+    return '/';
   },
-}))
+}));
 
 const renderWithAuth = (component, user = null) => {
   if (user) {
-    localStorage.setItem('user', JSON.stringify(user))
-    localStorage.setItem('token', 'mock-token')
+    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('token', 'mock-token');
   } else {
-    localStorage.clear()
+    localStorage.clear();
   }
 
-  return render(
-    <AuthProvider>
-      {component}
-    </AuthProvider>
-  )
-}
+  return render(<AuthProvider>{component}</AuthProvider>);
+};
 
 describe('ProfileCard', () => {
   const mockUser = {
     _id: '1',
     name: 'Test User',
     email: 'test@example.com',
-    role: 'user'
-  }
+    role: 'user',
+  };
 
   beforeEach(() => {
-    localStorage.clear()
-  })
+    localStorage.clear();
+  });
 
   it('renders profile card with user information', () => {
-    renderWithAuth(<ProfileCard user={mockUser} />, mockUser)
+    renderWithAuth(<ProfileCard user={mockUser} />, mockUser);
 
-    expect(screen.getByText(/name:/i)).toBeInTheDocument()
-    expect(screen.getByText(/email:/i)).toBeInTheDocument()
-    expect(screen.getByText(/test user/i)).toBeInTheDocument()
-    expect(screen.getByText(/test@example.com/i)).toBeInTheDocument()
-  })
+    expect(screen.getByText(/name:/i)).toBeInTheDocument();
+    expect(screen.getByText(/email:/i)).toBeInTheDocument();
+    expect(screen.getByText(/test user/i)).toBeInTheDocument();
+    expect(screen.getByText(/test@example.com/i)).toBeInTheDocument();
+  });
 
   it('renders user avatar', () => {
-    renderWithAuth(<ProfileCard user={mockUser} />, mockUser)
+    renderWithAuth(<ProfileCard user={mockUser} />, mockUser);
 
-    const avatar = screen.getByAltText('Avatar')
-    expect(avatar).toBeInTheDocument()
-    expect(avatar).toHaveAttribute('src', '/default-avatar.png')
-  })
+    const avatar = screen.getByAltText('Avatar');
+    expect(avatar).toBeInTheDocument();
+    expect(avatar).toHaveAttribute('src', '/default-avatar.png');
+  });
 
   it('renders edit profile button', () => {
-    renderWithAuth(<ProfileCard user={mockUser} />, mockUser)
+    renderWithAuth(<ProfileCard user={mockUser} />, mockUser);
 
-    expect(screen.getByText(/edit profile/i)).toBeInTheDocument()
-  })
+    expect(screen.getByText(/edit profile/i)).toBeInTheDocument();
+  });
 
   it('handles missing user data gracefully', () => {
-    const incompleteUser = { _id: '1' }
-    renderWithAuth(<ProfileCard user={incompleteUser} />, incompleteUser)
+    const incompleteUser = { _id: '1' };
+    renderWithAuth(<ProfileCard user={incompleteUser} />, incompleteUser);
 
-    expect(screen.getByText(/edit profile/i)).toBeInTheDocument()
-  })
+    expect(screen.getByText(/edit profile/i)).toBeInTheDocument();
+  });
 
   it('handles null user', () => {
-    renderWithAuth(<ProfileCard user={null} />)
-
-    expect(screen.getByText(/edit profile/i)).toBeInTheDocument()
-    expect(screen.getByText(/not available/i)).toBeInTheDocument()
-  })
+    renderWithAuth(<ProfileCard user={null} />);
+    expect(screen.getByText(/edit profile/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/not available/i).length).toBeGreaterThan(1);
+  });
 
   it('handles user with custom avatar', () => {
-    const userWithAvatar = { 
-      ...mockUser, 
-      avatar: 'https://example.com/avatar.jpg' 
-    }
-    renderWithAuth(<ProfileCard user={userWithAvatar} />, userWithAvatar)
+    const userWithAvatar = {
+      ...mockUser,
+      avatar: 'https://example.com/avatar.jpg',
+    };
+    renderWithAuth(<ProfileCard user={userWithAvatar} />, userWithAvatar);
 
-    const avatar = screen.getByAltText('Avatar')
-    expect(avatar).toHaveAttribute('src', 'https://example.com/avatar.jpg')
-  })
+    const avatar = screen.getByAltText('Avatar');
+    expect(avatar).toHaveAttribute('src', 'https://example.com/avatar.jpg');
+  });
 
   it('handles long user names', () => {
-    const userWithLongName = { 
-      ...mockUser, 
-      name: 'This is a very long user name that might overflow the container' 
-    }
-    renderWithAuth(<ProfileCard user={userWithLongName} />, userWithLongName)
+    const userWithLongName = {
+      ...mockUser,
+      name: 'This is a very long user name that might overflow the container',
+    };
+    renderWithAuth(<ProfileCard user={userWithLongName} />, userWithLongName);
 
-    expect(screen.getByText(/this is a very long user name/i)).toBeInTheDocument()
-  })
+    expect(screen.getByText(/this is a very long user name/i)).toBeInTheDocument();
+  });
 
   it('handles long email addresses', () => {
-    const userWithLongEmail = { 
-      ...mockUser, 
-      email: 'very.long.email.address.that.might.overflow@very.long.domain.com' 
-    }
-    renderWithAuth(<ProfileCard user={userWithLongEmail} />, userWithLongEmail)
+    const userWithLongEmail = {
+      ...mockUser,
+      email: 'very.long.email.address.that.might.overflow@very.long.domain.com',
+    };
+    renderWithAuth(<ProfileCard user={userWithLongEmail} />, userWithLongEmail);
 
-    expect(screen.getByText(/very.long.email.address/i)).toBeInTheDocument()
-  })
+    expect(screen.getByText(/very.long.email.address/i)).toBeInTheDocument();
+  });
 
   it('handles special characters in user name', () => {
-    const userWithSpecialChars = { 
-      ...mockUser, 
-      name: 'Test User @#$%^&*()' 
-    }
-    renderWithAuth(<ProfileCard user={userWithSpecialChars} />, userWithSpecialChars)
+    const userWithSpecialChars = {
+      ...mockUser,
+      name: 'Test User @#$%^&*()',
+    };
+    renderWithAuth(<ProfileCard user={userWithSpecialChars} />, userWithSpecialChars);
 
-    expect(screen.getByText(/test user/i)).toBeInTheDocument()
-  })
+    expect(screen.getByText(/test user/i)).toBeInTheDocument();
+  });
 
   it('handles special characters in email', () => {
-    const userWithSpecialEmail = { 
-      ...mockUser, 
-      email: 'test+special@example.com' 
-    }
-    renderWithAuth(<ProfileCard user={userWithSpecialEmail} />, userWithSpecialEmail)
+    const userWithSpecialEmail = {
+      ...mockUser,
+      email: 'test+special@example.com',
+    };
+    renderWithAuth(<ProfileCard user={userWithSpecialEmail} />, userWithSpecialEmail);
 
-    expect(screen.getByText(/test\+special@example.com/i)).toBeInTheDocument()
-  })
-}) 
+    expect(screen.getByText(/test\+special@example.com/i)).toBeInTheDocument();
+  });
+});

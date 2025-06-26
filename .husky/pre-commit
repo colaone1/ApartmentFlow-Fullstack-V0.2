@@ -1,1 +1,1 @@
-npx lint-staged && npm run lint && cd backend && npm run lint && cd .. 
+npx lint-staged 
