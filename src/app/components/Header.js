@@ -17,7 +17,7 @@ export default function Header() {
           width={200}
           height={50}
           priority
-          style={{ width: 'auto', height: 'auto' }}
+          className="w-full h-auto"
         />
       </div>
       <nav className="hidden md:flex space-x-6 text-xl font-semibold items-center">
