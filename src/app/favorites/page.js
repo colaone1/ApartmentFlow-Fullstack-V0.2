@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { ApiClient } from '../../utils/apiClient';
+import { ApiClient } from '@/utils/apiClient';
 import ListingCard from '../components/ListingCard';
 
 export default function FavoritesPage() {

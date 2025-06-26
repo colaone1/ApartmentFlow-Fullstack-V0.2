@@ -1,5 +1,5 @@
 'use client';
-import { ApiClient } from '../../utils/apiClient';
+import { ApiClient } from '@/utils/apiClient';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';

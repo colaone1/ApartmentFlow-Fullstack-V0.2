@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ApiClient } from '../../utils/apiClient';
+import { ApiClient } from '@/utils/apiClient';
 import NoteCard from '../../components/NoteCard';
 import NotesFilter from '../../components/NotesFilter';
 

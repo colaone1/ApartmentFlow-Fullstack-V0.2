@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import SearchBar from '../components/SearchBar';
 import ListingCard from '../components/ListingCard';
-import { ApiClient } from '../../utils/apiClient';
+import { ApiClient } from '@/utils/apiClient';
 
 export default function ListingsPage() {
   const [search, setSearch] = useState('');

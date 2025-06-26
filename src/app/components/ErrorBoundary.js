@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import performanceMonitor from '../utils/performance';
+import performanceMonitor from '@/utils/performance';
 
 // AI-OPTIMIZED: Error Boundary Component
 // Catches JavaScript errors anywhere in the child component tree
