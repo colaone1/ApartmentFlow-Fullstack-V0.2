@@ -7,10 +7,11 @@ jest.mock('../../../apiClient/apiClient', () => ({
     isLoggedIn: jest.fn(),
     getProfile: jest.fn(),
     login: jest.fn(),
-    register: jest.fn(),
     logout: jest.fn(),
-    removeProfile: jest.fn(),
-  }))
+    register: jest.fn(),
+    setToken: jest.fn(),
+    removeToken: jest.fn(),
+  })),
 }))
 
 // Mock Next.js router

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import NoteCard from '../NoteCard';
 
 // Mock the note data
@@ -50,9 +50,10 @@ describe('NoteCard', () => {
     expect(mockOnEdit).toHaveBeenCalledWith('1', null, true);
   });
 
-  test('calls onDelete when delete button is clicked', () => {
+  test('calls onDelete when delete button is clicked', async () => {
     // Mock window.confirm to return true
     window.confirm = jest.fn(() => true);
+    mockOnDelete.mockResolvedValue(undefined);
 
     render(
       <NoteCard 
@@ -63,7 +64,10 @@ describe('NoteCard', () => {
     );
 
     const deleteButton = screen.getByText('Delete');
-    fireEvent.click(deleteButton);
+    
+    await act(async () => {
+      fireEvent.click(deleteButton);
+    });
 
     expect(window.confirm).toHaveBeenCalled();
     expect(mockOnDelete).toHaveBeenCalledWith('1');

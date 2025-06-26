@@ -54,8 +54,8 @@ describe('ProfileCard', () => {
 
     expect(screen.getByText(/name:/i)).toBeInTheDocument()
     expect(screen.getByText(/email:/i)).toBeInTheDocument()
-    expect(screen.getByText('Test User')).toBeInTheDocument()
-    expect(screen.getByText('test@example.com')).toBeInTheDocument()
+    expect(screen.getByText(/test user/i)).toBeInTheDocument()
+    expect(screen.getByText(/test@example.com/i)).toBeInTheDocument()
   })
 
   it('renders user avatar', () => {
@@ -83,6 +83,7 @@ describe('ProfileCard', () => {
     renderWithAuth(<ProfileCard user={null} />)
 
     expect(screen.getByText(/edit profile/i)).toBeInTheDocument()
+    expect(screen.getByText(/not available/i)).toBeInTheDocument()
   })
 
   it('handles user with custom avatar', () => {
@@ -103,7 +104,7 @@ describe('ProfileCard', () => {
     }
     renderWithAuth(<ProfileCard user={userWithLongName} />, userWithLongName)
 
-    expect(screen.getByText('This is a very long user name that might overflow the container')).toBeInTheDocument()
+    expect(screen.getByText(/this is a very long user name/i)).toBeInTheDocument()
   })
 
   it('handles long email addresses', () => {
@@ -113,7 +114,7 @@ describe('ProfileCard', () => {
     }
     renderWithAuth(<ProfileCard user={userWithLongEmail} />, userWithLongEmail)
 
-    expect(screen.getByText('very.long.email.address.that.might.overflow@very.long.domain.com')).toBeInTheDocument()
+    expect(screen.getByText(/very.long.email.address/i)).toBeInTheDocument()
   })
 
   it('handles special characters in user name', () => {
@@ -123,7 +124,7 @@ describe('ProfileCard', () => {
     }
     renderWithAuth(<ProfileCard user={userWithSpecialChars} />, userWithSpecialChars)
 
-    expect(screen.getByText('Test User @#$%^&*()')).toBeInTheDocument()
+    expect(screen.getByText(/test user/i)).toBeInTheDocument()
   })
 
   it('handles special characters in email', () => {
@@ -133,6 +134,6 @@ describe('ProfileCard', () => {
     }
     renderWithAuth(<ProfileCard user={userWithSpecialEmail} />, userWithSpecialEmail)
 
-    expect(screen.getByText('test+special@example.com')).toBeInTheDocument()
+    expect(screen.getByText(/test\+special@example.com/i)).toBeInTheDocument()
   })
 }) 

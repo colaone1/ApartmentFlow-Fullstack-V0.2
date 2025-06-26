@@ -416,8 +416,8 @@ describe('Sidebar', () => {
       />
     )
 
-    // Should render without errors
-    expect(screen.getByText(/filters/i)).toBeInTheDocument()
+    // Should render without errors - use getAllByText since there are multiple "Filters" elements
+    expect(screen.getAllByText(/filters/i)).toHaveLength(2)
   })
 
   it('renders filter controls', () => {
@@ -430,15 +430,15 @@ describe('Sidebar', () => {
       />
     )
 
-    // Should render without errors
-    expect(screen.getByText(/filters/i)).toBeInTheDocument()
+    // Should render without errors - use getAllByText since there are multiple "Filters" elements
+    expect(screen.getAllByText(/filters/i)).toHaveLength(2)
   })
 
   it('handles missing props gracefully', () => {
     render(<Sidebar />)
 
-    // Should render without crashing
-    expect(screen.getByText(/filters/i)).toBeInTheDocument()
+    // Should render without crashing - use getAllByText since there are multiple "Filters" elements
+    expect(screen.getAllByText(/filters/i)).toHaveLength(2)
   })
 
   it('handles null props', () => {
@@ -451,7 +451,7 @@ describe('Sidebar', () => {
       />
     )
 
-    // Should render without crashing
-    expect(screen.getByText(/filters/i)).toBeInTheDocument()
+    // Should render without crashing - use getAllByText since there are multiple "Filters" elements
+    expect(screen.getAllByText(/filters/i)).toHaveLength(2)
   })
 }) 
