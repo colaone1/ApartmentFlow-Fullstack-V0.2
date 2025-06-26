@@ -151,12 +151,24 @@ if (require.main === module) {
       });
       break;
 
+    case 'memory':
+      {
+        const memoryUsage = process.memoryUsage();
+        console.log('Memory Usage:');
+        console.log(`  RSS: ${(memoryUsage.rss / 1024 / 1024).toFixed(2)} MB`);
+        console.log(`  Heap Total: ${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2)} MB`);
+        console.log(`  Heap Used: ${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB`);
+        console.log(`  External: ${(memoryUsage.external / 1024 / 1024).toFixed(2)} MB`);
+      }
+      break;
+
     default:
       console.log('Usage:');
       console.log('  node cache-stats.js start [interval_ms]  - Start continuous monitoring');
       console.log('  node cache-stats.js report               - Generate report from logs');
       console.log('  node cache-stats.js collect              - Collect single stats snapshot');
       console.log('  node cache-stats.js flush                - Flush all cache data');
+      console.log('  node cache-stats.js memory               - Display memory usage');
       break;
   }
 }

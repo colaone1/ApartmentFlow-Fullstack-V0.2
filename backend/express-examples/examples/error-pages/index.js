@@ -4,14 +4,19 @@
  * Module dependencies.
  */
 
-var express = require('../../');
-var path = require('node:path');
-var app = (module.exports = express());
-var logger = require('morgan');
-var session = require('express-session');
-var silent = process.env.NODE_ENV === 'test';
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const http = require('http');
+const https = require('https');
+const url = require('url');
+const querystring = require('querystring');
+const logger = require('morgan');
+const session = require('express-session');
+const silent = process.env.NODE_ENV === 'test';
 
 // general config
+const app = (module.exports = express());
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
