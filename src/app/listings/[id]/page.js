@@ -1,10 +1,10 @@
-"use client";
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
-import { ApiClient } from "../../../../apiClient/apiClient";
-import NoteCard from "../../components/NoteCard";
-import NotesFilter from "../../components/NotesFilter";
+'use client';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { ApiClient } from '../../../../apiClient/apiClient';
+import NoteCard from '../../components/NoteCard';
+import NotesFilter from '../../components/NotesFilter';
 
 export default function ApartmentDetailPage() {
   const params = useParams();
@@ -14,7 +14,12 @@ export default function ApartmentDetailPage() {
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [notes, setNotes] = useState([]);
-  const [newNote, setNewNote] = useState({ title: "", content: "", category: "general", priority: "medium" });
+  const [newNote, setNewNote] = useState({
+    title: '',
+    content: '',
+    category: 'general',
+    priority: 'medium',
+  });
   const [showNoteForm, setShowNoteForm] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState(null);
@@ -22,8 +27,9 @@ export default function ApartmentDetailPage() {
     search: '',
     category: 'all',
     priority: 'all',
-    sortBy: 'newest'
+    sortBy: 'newest',
   });
+  const [message, setMessage] = useState('');
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
@@ -32,24 +38,23 @@ export default function ApartmentDetailPage() {
       try {
         const apiClient = new ApiClient();
         if (!apiClient.isLoggedIn()) {
-          router.push("/auth/unauthorized");
+          router.push('/auth/unauthorized');
           return;
         }
 
         const response = await apiClient.getApartment(params.id);
         setApartment(response.data);
-        
+
         // Fetch notes for this apartment
         const notesResponse = await apiClient.getNotes({ apartmentId: params.id });
         setNotes(notesResponse.data || []);
-        
+
         // Check if apartment is in user's favorites
         const favoritesResponse = await apiClient.getFavorites();
-        const isFav = favoritesResponse.data?.some(fav => fav.apartment === params.id);
+        const isFav = favoritesResponse.data?.some((fav) => fav.apartment === params.id);
         setIsFavorite(isFav);
-        
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch apartment details");
+        setError(err.response?.data?.message || 'Failed to fetch apartment details');
       } finally {
         setLoading(false);
       }
@@ -66,15 +71,16 @@ export default function ApartmentDetailPage() {
       const apiClient = new ApiClient();
       const response = await apiClient.createNote({
         apartmentId: params.id,
-        ...newNote
+        ...newNote,
       });
-      
+
       setNotes([...notes, response.data]);
-      setNewNote({ title: "", content: "", category: "general", priority: "medium" });
+      setNewNote({ title: '', content: '', category: 'general', priority: 'medium' });
       setShowNoteForm(false);
+      setMessage('Note added successfully!');
     } catch (err) {
-      console.error("Failed to add note:", err);
-      alert("Failed to add note. Please try again.");
+      console.error('Failed to add note:', err);
+      alert('Failed to add note. Please try again.');
     }
   };
 
@@ -87,14 +93,12 @@ export default function ApartmentDetailPage() {
     try {
       const apiClient = new ApiClient();
       const response = await apiClient.updateNote(noteId, updatedNote);
-      
-      setNotes(notes.map(note => 
-        note._id === noteId ? response.data : note
-      ));
+
+      setNotes(notes.map((note) => (note._id === noteId ? response.data : note)));
       setEditingNoteId(null);
     } catch (err) {
-      console.error("Failed to update note:", err);
-      alert("Failed to update note. Please try again.");
+      console.error('Failed to update note:', err);
+      alert('Failed to update note. Please try again.');
     }
   };
 
@@ -102,11 +106,11 @@ export default function ApartmentDetailPage() {
     try {
       const apiClient = new ApiClient();
       await apiClient.deleteNote(noteId);
-      
-      setNotes(notes.filter(note => note._id !== noteId));
+
+      setNotes(notes.filter((note) => note._id !== noteId));
     } catch (err) {
-      console.error("Failed to delete note:", err);
-      alert("Failed to delete note. Please try again.");
+      console.error('Failed to delete note:', err);
+      alert('Failed to delete note. Please try again.');
     }
   };
 
@@ -120,13 +124,13 @@ export default function ApartmentDetailPage() {
       }
       setIsFavorite(!isFavorite);
     } catch (err) {
-      console.error("Failed to toggle favorite:", err);
+      console.error('Failed to toggle favorite:', err);
     }
   };
 
   const formatAmenities = (amenities) => {
     if (!amenities || amenities.length === 0) return [];
-    return Array.isArray(amenities) ? amenities : amenities.split(',').map(item => item.trim());
+    return Array.isArray(amenities) ? amenities : amenities.split(',').map((item) => item.trim());
   };
 
   const getStatusBadge = (status) => {
@@ -134,9 +138,9 @@ export default function ApartmentDetailPage() {
       available: { text: 'Available', color: 'bg-green-100 text-green-800' },
       rented: { text: 'Rented', color: 'bg-red-100 text-red-800' },
       pending: { text: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
-      unavailable: { text: 'Unavailable', color: 'bg-gray-100 text-gray-800' }
+      unavailable: { text: 'Unavailable', color: 'bg-gray-100 text-gray-800' },
     };
-    
+
     const config = statusConfig[status?.toLowerCase()] || statusConfig.available;
     return (
       <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${config.color}`}>
@@ -147,23 +151,27 @@ export default function ApartmentDetailPage() {
 
   // Filter and sort notes
   const filteredAndSortedNotes = notes
-    .filter(note => {
-      const matchesSearch = !notesFilter.search || 
+    .filter((note) => {
+      const matchesSearch =
+        !notesFilter.search ||
         note.title.toLowerCase().includes(notesFilter.search.toLowerCase()) ||
         note.content.toLowerCase().includes(notesFilter.search.toLowerCase());
-      
-      const matchesCategory = notesFilter.category === 'all' || note.category === notesFilter.category;
-      const matchesPriority = notesFilter.priority === 'all' || note.priority === notesFilter.priority;
-      
+
+      const matchesCategory =
+        notesFilter.category === 'all' || note.category === notesFilter.category;
+      const matchesPriority =
+        notesFilter.priority === 'all' || note.priority === notesFilter.priority;
+
       return matchesSearch && matchesCategory && matchesPriority;
     })
     .sort((a, b) => {
       switch (notesFilter.sortBy) {
         case 'oldest':
           return new Date(a.createdAt) - new Date(b.createdAt);
-        case 'priority':
+        case 'priority': {
           const priorityOrder = { high: 3, medium: 2, low: 1 };
           return priorityOrder[b.priority] - priorityOrder[a.priority];
+        }
         case 'title':
           return a.title.localeCompare(b.title);
         case 'newest':
@@ -212,9 +220,24 @@ export default function ApartmentDetailPage() {
     );
   }
 
-  const { title, description, price, location, bedrooms, bathrooms, area, amenities, images, status } = apartment;
+  const {
+    title,
+    description,
+    price,
+    location,
+    bedrooms,
+    bathrooms,
+    area,
+    amenities,
+    images,
+    status,
+  } = apartment;
   const { address } = location || {};
-  const imageUrls = images?.map(img => img.url && img.url.trim() !== '' ? `${backendUrl}/${img.url.replace(/\\/g, '/').replace(/^\//, '')}` : '/default-image.png') || ['/default-image.png'];
+  const imageUrls = images?.map((img) =>
+    img.url && img.url.trim() !== ''
+      ? `${backendUrl}/${img.url.replace(/\\/g, '/').replace(/^\//, '')}`
+      : '/default-image.png'
+  ) || ['/default-image.png'];
   const displayAmenities = formatAmenities(amenities);
 
   return (
@@ -240,8 +263,8 @@ export default function ApartmentDetailPage() {
               <button
                 onClick={handleToggleFavorite}
                 className={`p-3 rounded-full transition-colors ${
-                  isFavorite 
-                    ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                  isFavorite
+                    ? 'bg-red-100 text-red-600 hover:bg-red-200'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -261,19 +284,27 @@ export default function ApartmentDetailPage() {
                   src={imageUrls[currentImageIndex]}
                   alt={`${title} - Image ${currentImageIndex + 1}`}
                   fill
-                  style={{ objectFit: "cover" }}
+                  style={{ objectFit: 'cover' }}
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
                 />
                 {imageUrls.length > 1 && (
                   <>
                     <button
-                      onClick={() => setCurrentImageIndex(prev => prev === 0 ? imageUrls.length - 1 : prev - 1)}
+                      onClick={() =>
+                        setCurrentImageIndex((prev) =>
+                          prev === 0 ? imageUrls.length - 1 : prev - 1
+                        )
+                      }
                       className="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70"
                     >
                       ←
                     </button>
                     <button
-                      onClick={() => setCurrentImageIndex(prev => prev === imageUrls.length - 1 ? 0 : prev + 1)}
+                      onClick={() =>
+                        setCurrentImageIndex((prev) =>
+                          prev === imageUrls.length - 1 ? 0 : prev + 1
+                        )
+                      }
                       className="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70"
                     >
                       →
@@ -284,7 +315,7 @@ export default function ApartmentDetailPage() {
                   </>
                 )}
               </div>
-              
+
               {/* Thumbnail Navigation */}
               {imageUrls.length > 1 && (
                 <div className="p-4 flex gap-2 overflow-x-auto">
@@ -301,7 +332,7 @@ export default function ApartmentDetailPage() {
                         alt={`Thumbnail ${index + 1}`}
                         width={80}
                         height={80}
-                        style={{ objectFit: "cover" }}
+                        style={{ objectFit: 'cover' }}
                       />
                     </button>
                   ))}
@@ -326,11 +357,13 @@ export default function ApartmentDetailPage() {
                   <div className="text-sm text-gray-600">sq ft</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">£{price?.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    £{price?.toLocaleString()}
+                  </div>
                   <div className="text-sm text-gray-600">per month</div>
                 </div>
               </div>
-              
+
               {description && (
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
@@ -359,7 +392,8 @@ export default function ApartmentDetailPage() {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">My Notes</h2>
                   <p className="text-sm text-gray-600 mt-1">
-                    {notes.length} note{notes.length !== 1 ? 's' : ''} • {filteredAndSortedNotes.length} showing
+                    {notes.length} note{notes.length !== 1 ? 's' : ''} •{' '}
+                    {filteredAndSortedNotes.length} showing
                   </p>
                 </div>
                 <button
@@ -372,10 +406,7 @@ export default function ApartmentDetailPage() {
 
               {/* Notes Filter */}
               {notes.length > 0 && (
-                <NotesFilter 
-                  filters={notesFilter} 
-                  onFilterChange={setNotesFilter} 
-                />
+                <NotesFilter filters={notesFilter} onFilterChange={setNotesFilter} />
               )}
 
               {/* Add Note Form */}
@@ -386,13 +417,13 @@ export default function ApartmentDetailPage() {
                       type="text"
                       placeholder="Note title"
                       value={newNote.title}
-                      onChange={(e) => setNewNote({...newNote, title: e.target.value})}
+                      onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
                       className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
                     />
                     <select
                       value={newNote.category}
-                      onChange={(e) => setNewNote({...newNote, category: e.target.value})}
+                      onChange={(e) => setNewNote({ ...newNote, category: e.target.value })}
                       className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="general">General</option>
@@ -406,14 +437,14 @@ export default function ApartmentDetailPage() {
                   <textarea
                     placeholder="Write your note here..."
                     value={newNote.content}
-                    onChange={(e) => setNewNote({...newNote, content: e.target.value})}
+                    onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 h-24"
                     required
                   />
                   <div className="flex justify-between items-center mt-4">
                     <select
                       value={newNote.priority}
-                      onChange={(e) => setNewNote({...newNote, priority: e.target.value})}
+                      onChange={(e) => setNewNote({ ...newNote, priority: e.target.value })}
                       className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="low">Low Priority</option>
@@ -435,7 +466,9 @@ export default function ApartmentDetailPage() {
                 <div className="text-center py-12">
                   <div className="text-gray-400 text-6xl mb-4">📝</div>
                   <p className="text-gray-500 text-lg mb-2">No notes yet</p>
-                  <p className="text-gray-400 text-sm">Add your first note to keep track of your thoughts about this apartment.</p>
+                  <p className="text-gray-400 text-sm">
+                    Add your first note to keep track of your thoughts about this apartment.
+                  </p>
                 </div>
               ) : filteredAndSortedNotes.length === 0 ? (
                 <div className="text-center py-8">
@@ -509,4 +542,4 @@ export default function ApartmentDetailPage() {
       </div>
     </div>
   );
-} 
+}
