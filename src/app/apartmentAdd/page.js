@@ -26,6 +26,8 @@ export default function ApartmentAdd() {
     amenities: '',
     images: [],
     status: '',
+    isPublic: true,
+    neighborhoodRating: 5,
   });
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
@@ -174,6 +176,8 @@ export default function ApartmentAdd() {
         submissionData.append('area', formData.area);
         submissionData.append('amenities', formData.amenities);
         submissionData.append('status', formData.status);
+        submissionData.append('isPublic', formData.isPublic ? 'true' : 'false');
+        submissionData.append('neighborhoodRating', formData.neighborhoodRating);
         submissionData.append('location', JSON.stringify(locationObject));
         if (imageFiles.length > 0) {
           imageFiles.forEach((file) => submissionData.append('images', file));
@@ -209,6 +213,8 @@ export default function ApartmentAdd() {
             amenities: '',
             images: [],
             status: '',
+            isPublic: true,
+            neighborhoodRating: 5,
           });
           setAutocompleteValue('');
           setSuggestions([]);
@@ -505,10 +511,55 @@ export default function ApartmentAdd() {
           />
           {errors.status && <p className="mt-1 text-sm text-red-500">{errors.status}</p>}
         </div>
+
+        {/* Neighborhood Rating */}
+        <div>
+          <label className="block mb-1 font-semibold">Neighborhood Rating (1-10)</label>
+          <div className="flex items-center space-x-2">
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value={formData.neighborhoodRating}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, neighborhoodRating: parseInt(e.target.value) }))
+              }
+              className="flex-1"
+            />
+            <span className="text-lg font-semibold w-8 text-center">
+              {formData.neighborhoodRating}
+            </span>
+          </div>
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <span>Poor</span>
+            <span>Excellent</span>
+          </div>
+        </div>
+
+        {/* Public/Private Toggle */}
+        <div className="flex items-center space-x-3">
+          <label htmlFor="isPublic" className="font-semibold">
+            Public/Private Listing
+          </label>
+          <button
+            type="button"
+            onClick={() => setFormData((prev) => ({ ...prev, isPublic: !prev.isPublic }))}
+            className={`w-14 h-6 flex items-center rounded-full p-1 duration-300 ease-in-out ${
+              formData.isPublic ? 'bg-green-500' : 'bg-gray-400'
+            }`}
+          >
+            <div
+              className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
+                formData.isPublic ? 'translate-x-8' : 'translate-x-0'
+              }`}
+            />
+          </button>
+          <span className="text-sm text-gray-600">{formData.isPublic ? 'Public' : 'Private'}</span>
+        </div>
+
         {success && (
           <p style={{ color: 'green', marginTop: '1rem' }}>Apartment listed successfully!</p>
         )}
-        {errors.submit && <p className="text-red-500 text-sm">{errors.submit}</p>}
         <Button type="submit">{loading ? 'Listing apartment...' : 'List an apartment'}</Button>
       </form>
     </div>
