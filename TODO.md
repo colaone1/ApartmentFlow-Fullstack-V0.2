@@ -3,18 +3,21 @@
 ## 🔮 Future Features & Enhancements
 
 ### Authentication & Authorization
+
 - [ ] Add email verification for new users
 - [ ] Implement password reset functionality
 - [ ] Add OAuth integration (Google, Facebook)
 - [ ] Two-factor authentication
 
 ### User Management
+
 - [ ] User dashboard with saved searches
 - [ ] User preferences and settings
 - [ ] User activity history
 - [ ] User analytics and insights
 
 ### Apartment Listings
+
 - [ ] Allow regular users to create listings
 - [ ] Add image moderation system
   - [ ] Implement image content filtering
@@ -29,8 +32,12 @@
   - [ ] View count
   - [ ] Save count
   - [ ] Contact count
+- [x] Enforce image upload limit (max 8) in apartment add form
+- [x] Replace popup with feedback message at bottom of page (green for success, red for error, shows backend error)
+- [ ] Consider applying feedback message pattern to login, registration, and profile edit forms for consistency
 
 ### Search & Filtering
+
 - [ ] Advanced search filters
   - [ ] Amenities
   - [ ] Property type
@@ -42,6 +49,7 @@
 - [ ] AI-powered search recommendations
 
 ### Maps & Location
+
 - [ ] Interactive map view
 - [ ] Location-based search
 - [ ] Distance-based filtering
@@ -50,6 +58,7 @@
 - [ ] Public transport accessibility
 
 ### Messaging & Communication
+
 - [ ] In-app messaging system
 - [ ] Email notifications
 - [ ] Push notifications
@@ -58,6 +67,7 @@
 - [ ] Virtual tour scheduling
 
 ### Reviews & Ratings
+
 - [ ] User reviews for apartments
 - [ ] Agent ratings
 - [ ] Property ratings
@@ -66,6 +76,7 @@
 - [ ] Review response system
 
 ### Performance & Security
+
 - [ ] Advanced rate limiting
 - [ ] API caching with Redis
 - [ ] Image optimization and CDN
@@ -74,6 +85,7 @@
 - [ ] Penetration testing
 
 ### Testing & Documentation
+
 - [ ] Comprehensive test suite
 - [ ] API documentation with Swagger
 - [ ] User documentation
@@ -82,6 +94,7 @@
 - [ ] Load testing
 
 ### Deployment & DevOps
+
 - [ ] CI/CD pipeline with GitHub Actions
 - [ ] Automated testing in pipeline
 - [ ] Monitoring and logging (ELK stack)
@@ -90,6 +103,7 @@
 - [ ] Error tracking and alerting
 
 ### Mobile & Accessibility
+
 - [ ] Mobile app development (React Native)
 - [ ] Progressive Web App (PWA)
 - [ ] Accessibility improvements
@@ -97,6 +111,7 @@
 - [ ] Offline functionality
 
 ### Advanced Features
+
 - [ ] Virtual tours with 360° photos
 - [ ] AI-powered recommendations
 - [ ] Market analysis tools
@@ -107,6 +122,7 @@
 - [ ] Lead management system
 
 ### Analytics & Business Intelligence
+
 - [ ] User behavior analytics
 - [ ] Market trend analysis
 - [ ] Performance dashboards
@@ -115,6 +131,7 @@
 - [ ] ROI analysis
 
 ### Integration & APIs
+
 - [ ] Property management system integrations
 - [ ] CRM system integration
 - [ ] Payment gateway integration
@@ -124,4 +141,4 @@
 
 ---
 
-> **Note**: This list represents future enhancements and features. Current core functionality is documented in `PROJECT_TASKS.md`. 
+> **Note**: This list represents future enhancements and features. Current core functionality is documented in `PROJECT_TASKS.md`.

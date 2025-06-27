@@ -10,14 +10,14 @@ export default function Header() {
 
   return (
     <header className="bg-[var(--color-secondary)] text-white px-6 py-1 flex justify-between items-center">
-      <div className="w-[120px] md:w-[200px]">
+      <div className="relative w-[120px] md:w-[200px] aspect-[4/1]">
         <Image
           src="/images/logo.png"
           alt="ApartmentsFlow logo"
-          width={200}
-          height={50}
+          fill
           priority
-          className="w-full h-auto"
+          style={{ objectFit: 'contain' }}
+          sizes="(max-width: 768px) 120px, 200px"
         />
       </div>
       <nav className="hidden md:flex space-x-6 text-xl font-semibold items-center">

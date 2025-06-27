@@ -95,7 +95,7 @@ export default function ListingsPage() {
                 images: flat.images,
               });
 
-              return <ListingCard key={index} apartment={flat} />;
+              return <ListingCard key={index} apartment={flat} priority={index < 3} />;
             })}
           </div>
         )}

@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 // eslint-disable-next-line no-unused-vars
 import FavoriteButton from './FavoriteButton';
 
-const ListingCard = ({ apartment }) => {
+const ListingCard = ({ apartment, priority = false }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -115,7 +115,7 @@ const ListingCard = ({ apartment }) => {
           fill
           style={{ objectFit: 'cover' }}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          priority={false}
+          priority={priority}
         />
         {allImageUrls.length > 1 && (
           <span className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">

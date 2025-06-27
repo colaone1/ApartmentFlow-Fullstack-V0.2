@@ -28,7 +28,6 @@ export const metadata = {
     'Search, compare, and organize apartment listings with built-in tools for exploring neighborhoods, tracking favorites, and planning your daily commute.',
   keywords: 'apartments, rental, housing, search, real estate',
   authors: [{ name: 'ApartmentsFlow Team' }],
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=5',
   robots: 'index, follow',
   openGraph: {
     title: 'ApartmentsFlow - Smart Apartment Search',
@@ -43,14 +42,16 @@ export const metadata = {
   },
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        {/* AI-OPTIMIZED: Preload critical resources */}
-        <link rel="preload" href="/background2.jpg" as="image" />
-        <link rel="preload" href="/default-avatar.png" as="image" />
-
         {/* AI-OPTIMIZED: DNS prefetch for external domains */}
         <link rel="dns-prefetch" href="//localhost" />
 

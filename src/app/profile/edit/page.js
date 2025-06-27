@@ -7,6 +7,7 @@ import Input from '@/app/components/Input';
 // eslint-disable-next-line no-unused-vars
 import Button from '@/app/components/Button';
 import ApiClient from '@/utils/apiClient';
+import { uploadImageToCloudinary } from '@/app/utils/cloudinary';
 
 const edit = () => {
   const { user, setUser } = useAuth();
@@ -14,7 +15,9 @@ const edit = () => {
     name: '',
     email: '',
     password: '',
+    profileImage: '',
   });
+  const [profileImageFile, setProfileImageFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -26,12 +29,23 @@ const edit = () => {
         name: user.name || '',
         email: user.email || '',
         password: '',
+        profileImage: user.profileImage || '',
       });
     }
   }, [user]);
 
   const handleChange = (e) => {
     setEditedUser({ ...editedUser, [e.target.name]: e.target.value });
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files[0]) {
+      setProfileImageFile(e.target.files[0]);
+      setEditedUser({
+        ...editedUser,
+        profileImage: URL.createObjectURL(e.target.files[0]),
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -44,6 +58,13 @@ const edit = () => {
       if (editedUser.email) fieldsToUpdate.email = editedUser.email;
       if (editedUser.password) fieldsToUpdate.password = editedUser.password;
 
+      if (profileImageFile) {
+        const uploadedUrl = await uploadImageToCloudinary(profileImageFile);
+        fieldsToUpdate.profileImage = uploadedUrl;
+      } else if (editedUser.profileImage) {
+        fieldsToUpdate.profileImage = editedUser.profileImage;
+      }
+
       if (Object.keys(fieldsToUpdate).length === 0) {
         throw new Error('Please update at least one field.');
       }
@@ -51,8 +72,10 @@ const edit = () => {
       const response = await apiClient.updateProfile(fieldsToUpdate);
       setUser(response);
       setSuccess('Profile updated successfully!');
+      setProfileImageFile(null);
+      setEditedUser((prev) => ({ ...prev, password: '' }));
     } catch (error) {
-      setError(error.message || 'Failed to update user profile.', error);
+      setError(error.message || 'Failed to update user profile.');
     } finally {
       setLoading(false);
     }
@@ -95,6 +118,22 @@ const edit = () => {
             onChange={handleChange}
             className="w-full p-2 border rounded"
             required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Profile Image</label>
+          {editedUser.profileImage && (
+            <img
+              src={editedUser.profileImage}
+              alt="Profile Preview"
+              className="w-32 h-32 rounded-full mb-2 object-cover"
+            />
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="w-full p-2 border rounded"
           />
         </div>
         {success && <p style={{ color: 'green', marginTop: '1rem' }}>{success}</p>}
