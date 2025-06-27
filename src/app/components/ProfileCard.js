@@ -27,9 +27,9 @@ const ProfileCard = ({ user }) => {
   return (
     <div>
       <img
-        src={user.avatar || '/default-avatar.png'}
+        src={user.profileImage || user.avatar || '/default-avatar.png'}
         alt="Avatar"
-        className="w-30 h-30 rounded-full"
+        className="w-32 h-32 rounded-full object-cover"
       />
       <p className="font-bold m-2">Name: {user.name}</p>
       <p className="font-bold m-2">Email: {user.email}</p>
