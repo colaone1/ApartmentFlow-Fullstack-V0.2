@@ -56,11 +56,22 @@ export default function ApartmentDetailPage() {
         const notesResponse = await apiClient.getNotes({ apartmentId: params.id });
         // eslint-disable-next-line no-console
         console.log('Notes fetched:', notesResponse.data);
-        setNotes(notesResponse.data || []);
+        // Fix: set notes to array only
+        const notesArr = Array.isArray(notesResponse.data?.data)
+          ? notesResponse.data.data
+          : Array.isArray(notesResponse.data)
+          ? notesResponse.data
+          : [];
+        setNotes(notesArr);
 
         // Check if apartment is in user's favorites
         const favoritesResponse = await apiClient.getFavorites();
-        const isFav = favoritesResponse.data?.some((fav) => fav.apartment === params.id);
+        const favoritesArr = Array.isArray(favoritesResponse.data?.data)
+          ? favoritesResponse.data.data
+          : Array.isArray(favoritesResponse.data)
+          ? favoritesResponse.data
+          : [];
+        const isFav = favoritesArr.some((fav) => fav.apartment === params.id);
         setIsFavorite(isFav);
       } catch (err) {
         // eslint-disable-next-line no-console
@@ -299,9 +310,11 @@ export default function ApartmentDetailPage() {
               <div className="relative h-96">
                 <Image
                   src={imageUrls[currentImageIndex]}
-                  alt={`${title} - Image ${currentImageIndex + 1}`}
+                  alt={title}
                   fill
                   style={{ objectFit: 'cover' }}
+                  className="rounded-lg shadow-md"
+                  priority
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
                 />
                 {imageUrls.length > 1 && (
@@ -495,7 +508,7 @@ export default function ApartmentDetailPage() {
                 <div className="space-y-4">
                   {filteredAndSortedNotes.map((note) => (
                     <NoteCard
-                      key={note._id}
+                      key={note._id || note.id || note.title}
                       note={note}
                       onEdit={handleEditNote}
                       onDelete={handleDeleteNote}
