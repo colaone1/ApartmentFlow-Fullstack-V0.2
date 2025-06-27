@@ -34,7 +34,7 @@ const Dropdown = () => {
           onClick={toggleDropdown}
         >
           <img
-            src={user?.avatar || '/default-avatar.png'}
+            src={user?.profileImage || user?.avatar || '/default-avatar.png'}
             alt="avatar"
             className="w-full h-full object-cover block"
           />
