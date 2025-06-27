@@ -2,14 +2,19 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import React from 'react';
-// eslint-disable-next-line no-unused-vars
+
 import { useAuth } from '../context/AuthContext';
 // eslint-disable-next-line no-unused-vars
 import FavoriteButton from './FavoriteButton';
+import ApiClient from '@/utils/apiClient';
 
-const ListingCard = ({ apartment, priority = false }) => {
+const ListingCard = ({ apartment, priority = false, onFavoriteChange }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const auth = (useAuth && useAuth()) || {};
+  const { user, isLoggedIn } = auth;
+  const apiClient = new ApiClient();
+  const [isFavorited, setIsFavorited] = useState(apartment.isFavorited || false);
 
   const {
     title = 'Untitled',
@@ -98,8 +103,34 @@ const ListingCard = ({ apartment, priority = false }) => {
 
   const displayAmenities = formatAmenities(amenities);
 
+  const handleFavoriteClick = async (apartmentId) => {
+    if (!isLoggedIn) return;
+    try {
+      if (isFavorited) {
+        await apiClient.removeFavorite(apartmentId);
+        setIsFavorited(false);
+        if (typeof onFavoriteChange === 'function') onFavoriteChange(apartmentId, false);
+      } else {
+        await apiClient.addFavorite(apartmentId);
+        setIsFavorited(true);
+        if (typeof onFavoriteChange === 'function') onFavoriteChange(apartmentId, true);
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Error toggling favorite:', err);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 relative">
+      {/* Favorite button in top-right */}
+      <div className="absolute top-2 right-2 z-10">
+        <FavoriteButton
+          apartmentId={apartment._id}
+          isInitiallyFavorited={isFavorited}
+          onClick={handleFavoriteClick}
+        />
+      </div>
       <div
         className="relative w-full h-48 cursor-pointer"
         onClick={() => {

@@ -30,6 +30,12 @@ export default function FavoritesPage() {
     fetchFavorites();
   }, [isLoggedIn]);
 
+  const handleFavoriteChange = (apartmentId, isNowFavorited) => {
+    if (!isNowFavorited) {
+      setFavorites((prev) => prev.filter((apt) => apt._id !== apartmentId));
+    }
+  };
+
   if (loading) return <p>Loading your favorites...</p>;
   if (favorites.length === 0) return <p>No favorite apartments yet.</p>;
 
@@ -37,7 +43,11 @@ export default function FavoritesPage() {
     <div className="mt-6 max-w-2/3 md:max-w-4xl mx-auto px-2">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {favorites.map((apartment) => (
-          <ListingCard key={apartment._id} apartment={apartment} />
+          <ListingCard
+            key={apartment._id}
+            apartment={apartment}
+            onFavoriteChange={handleFavoriteChange}
+          />
         ))}
       </div>
     </div>
