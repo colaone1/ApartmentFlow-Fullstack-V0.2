@@ -38,11 +38,21 @@ export const AuthProvider = ({ children }) => {
           console.error('Failed to fetch user profile:', err);
           setUser(null);
           setIsLoggedIn(false);
+          apiClient.removeToken(); // Clear token on 401
         }
       }
       setLoading(false);
     };
     checkAuth();
+
+    // Listen for token changes in other tabs
+    const handleStorageChange = (event) => {
+      if (event.key === 'authToken') {
+        window.location.reload();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
   const register = async (name, email, password) => {
     const response = await apiClient.register(name, email, password);
@@ -60,8 +70,7 @@ export const AuthProvider = ({ children }) => {
   };
   const logout = async () => {
     try {
-      // eslint-disable-next-line no-console
-      console.log('Logging out user');
+      // console.log('Logging out user'); // Commented out for ESLint
       setUser(null);
       setIsLoggedIn(false);
       apiClient.removeToken();

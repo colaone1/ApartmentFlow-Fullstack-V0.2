@@ -44,6 +44,28 @@ const getApartments = async (req, res) => {
 
     const query = buildApartmentQuery(req);
 
+    // Add filter logic
+    if (req.query.minPrice) {
+      query.price = { ...query.price, $gte: Number(req.query.minPrice) };
+    }
+    if (req.query.maxPrice) {
+      query.price = { ...query.price, $lte: Number(req.query.maxPrice) };
+    }
+    if (req.query.bedrooms) {
+      query.bedrooms = { $gte: Number(req.query.bedrooms) };
+    }
+    // Optional: radius filter (requires coordinates)
+    if (req.query.radius && req.query.longitude && req.query.latitude) {
+      query['location.coordinates'] = {
+        $geoWithin: {
+          $centerSphere: [
+            [Number(req.query.longitude), Number(req.query.latitude)],
+            Number(req.query.radius) / 6378.1, // radius in km
+          ],
+        },
+      };
+    }
+
     // Execute query with pagination
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 // eslint-disable-next-line no-unused-vars
 import Image from 'next/image';
@@ -16,6 +16,7 @@ export default function ApartmentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageError, setImageError] = useState(false);
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState({
     title: '',
@@ -35,6 +36,19 @@ export default function ApartmentDetailPage() {
   const [message, setMessage] = useState('');
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+
+  const imageUrls = useMemo(() => {
+    if (!apartment || !apartment.images) return ['/default-image.png'];
+    return apartment.images.map((img) => {
+      if (!img.url || img.url.trim() === '') {
+        return '/default-image.png';
+      }
+      if (img.url.startsWith('http://') || img.url.startsWith('https://')) {
+        return img.url;
+      }
+      return `${backendUrl}/${img.url.replace(/\\/g, '/').replace(/^\//, '')}`;
+    });
+  }, [apartment, backendUrl]);
 
   useEffect(() => {
     const fetchApartmentDetails = async () => {
@@ -102,6 +116,9 @@ export default function ApartmentDetailPage() {
       setNewNote({ title: '', content: '', category: 'general', priority: 'medium' });
       setShowNoteForm(false);
       setMessage('Note added successfully!');
+
+      // Clear message after 3 seconds
+      setTimeout(() => setMessage(''), 3000);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Error adding note:', err);
@@ -119,8 +136,13 @@ export default function ApartmentDetailPage() {
       const apiClient = new ApiClient();
       const response = await apiClient.updateNote(noteId, updatedNote);
 
+      // Update the notes array with the updated note
       setNotes(notes.map((note) => (note._id === noteId ? response.data : note)));
       setEditingNoteId(null);
+      setMessage('Note updated successfully!');
+
+      // Clear message after 3 seconds
+      setTimeout(() => setMessage(''), 3000);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Failed to update note:', err);
@@ -154,6 +176,24 @@ export default function ApartmentDetailPage() {
       // eslint-disable-next-line no-console
       console.error('Failed to toggle favorite:', err);
     }
+  };
+
+  const handleImageNavigation = (direction) => {
+    if (imageUrls.length <= 1) return;
+
+    if (direction === 'next') {
+      setCurrentImageIndex((prev) => (prev === imageUrls.length - 1 ? 0 : prev + 1));
+    } else if (direction === 'prev') {
+      setCurrentImageIndex((prev) => (prev === 0 ? imageUrls.length - 1 : prev - 1));
+    }
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  const handleImageLoad = () => {
+    setImageError(false);
   };
 
   const formatAmenities = (amenities) => {
@@ -208,6 +248,32 @@ export default function ApartmentDetailPage() {
       }
     });
 
+  // Debug logging
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('Notes state:', notes);
+    // eslint-disable-next-line no-console
+    console.log('Notes filter:', notesFilter);
+    // eslint-disable-next-line no-console
+    console.log('Filtered notes:', filteredAndSortedNotes);
+  }, [notes, notesFilter, filteredAndSortedNotes]);
+
+  // Keyboard navigation for image slideshow
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (imageUrls.length <= 1) return;
+
+      if (e.key === 'ArrowLeft') {
+        handleImageNavigation('prev');
+      } else if (e.key === 'ArrowRight') {
+        handleImageNavigation('next');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [imageUrls.length]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -248,24 +314,9 @@ export default function ApartmentDetailPage() {
     );
   }
 
-  const {
-    title,
-    description,
-    price,
-    location,
-    bedrooms,
-    bathrooms,
-    area,
-    amenities,
-    images,
-    status,
-  } = apartment;
+  const { title, description, price, location, bedrooms, bathrooms, area, amenities, status } =
+    apartment;
   const { address } = location || {};
-  const imageUrls = images?.map((img) =>
-    img.url && img.url.trim() !== ''
-      ? `${backendUrl}/${img.url.replace(/\\/g, '/').replace(/^\//, '')}`
-      : '/default-image.png'
-  ) || ['/default-image.png'];
   const displayAmenities = formatAmenities(amenities);
 
   return (
@@ -308,34 +359,39 @@ export default function ApartmentDetailPage() {
             {/* Image Gallery */}
             <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
               <div className="relative h-96">
-                <Image
-                  src={imageUrls[currentImageIndex]}
-                  alt={title}
-                  fill
-                  style={{ objectFit: 'cover' }}
-                  className="rounded-lg shadow-md"
-                  priority
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
-                />
+                {imageError ? (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center rounded-lg">
+                    <div className="text-center">
+                      <div className="text-6xl mb-2">📷</div>
+                      <p className="text-gray-500">Image not available</p>
+                    </div>
+                  </div>
+                ) : (
+                  <Image
+                    src={imageUrls[currentImageIndex]}
+                    alt={title}
+                    fill
+                    style={{ objectFit: 'cover' }}
+                    className="rounded-lg shadow-md"
+                    priority
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
+                    onError={handleImageError}
+                    onLoad={handleImageLoad}
+                  />
+                )}
                 {imageUrls.length > 1 && (
                   <>
                     <button
-                      onClick={() =>
-                        setCurrentImageIndex((prev) =>
-                          prev === 0 ? imageUrls.length - 1 : prev - 1
-                        )
-                      }
-                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70"
+                      onClick={() => handleImageNavigation('prev')}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all duration-200 hover:scale-110"
+                      aria-label="Previous image"
                     >
                       ←
                     </button>
                     <button
-                      onClick={() =>
-                        setCurrentImageIndex((prev) =>
-                          prev === imageUrls.length - 1 ? 0 : prev + 1
-                        )
-                      }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70"
+                      onClick={() => handleImageNavigation('next')}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all duration-200 hover:scale-110"
+                      aria-label="Next image"
                     >
                       →
                     </button>
@@ -353,9 +409,12 @@ export default function ApartmentDetailPage() {
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                        index === currentImageIndex ? 'border-blue-500' : 'border-gray-200'
+                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${
+                        index === currentImageIndex
+                          ? 'border-blue-500 shadow-lg'
+                          : 'border-gray-200 hover:border-blue-300'
                       }`}
+                      aria-label={`View image ${index + 1}`}
                     >
                       <Image
                         src={url}
@@ -433,6 +492,19 @@ export default function ApartmentDetailPage() {
                   {showNoteForm ? 'Cancel' : 'Add Note'}
                 </button>
               </div>
+
+              {/* Success Message */}
+              {message && (
+                <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+                  {message}
+                  <button
+                    onClick={() => setMessage('')}
+                    className="float-right font-bold text-green-700 hover:text-green-900"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
 
               {/* Notes Filter */}
               {notes.length > 0 && (

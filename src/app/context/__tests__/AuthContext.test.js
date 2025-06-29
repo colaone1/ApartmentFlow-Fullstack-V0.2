@@ -10,6 +10,7 @@ const mockApiClient = {
   getProfile: jest.fn(),
   removeProfile: jest.fn(),
   isLoggedIn: jest.fn(),
+  removeToken: jest.fn(),
 };
 
 jest.mock('../../../utils/apiClient', () => ({

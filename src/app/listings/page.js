@@ -7,6 +7,7 @@ import SearchBar from '../components/SearchBar';
 // eslint-disable-next-line no-unused-vars
 import ListingCard from '../components/ListingCard';
 import ApiClient from '@/utils/apiClient';
+// import Sidebar from '../components/Sidebar'; // Remove this line if not needed
 
 export default function ListingsPage() {
   const [search, setSearch] = useState('');
@@ -17,6 +18,14 @@ export default function ListingsPage() {
   const [pages, setPages] = useState(1);
   const [limit] = useState(6);
 
+  // Add filter state
+  const [filters] = useState({
+    minPrice: 0,
+    maxPrice: 3000,
+    bedrooms: 0,
+    radius: 10,
+  });
+
   useEffect(() => {
     const fetchFlats = async () => {
       try {
@@ -25,7 +34,8 @@ export default function ListingsPage() {
           window.location.href = 'auth/unauthorized';
           return;
         }
-        const response = await apiClient.getApartments(page, limit);
+        // Pass filters to API
+        const response = await apiClient.getApartments(page, limit, filters);
         // eslint-disable-next-line no-console
         console.log('API response:', response.data);
         if (Array.isArray(response.data.apartments)) {
@@ -45,11 +55,17 @@ export default function ListingsPage() {
       }
     };
     fetchFlats();
-  }, [page, limit]);
+  }, [page, limit, filters]);
 
-  const filteredFlats = (flats || []).filter((flat) =>
-    flat.title.toLowerCase().includes(search.toLowerCase())
-  );
+  // Filter on client side as well
+  const filteredFlats = (flats || []).filter((flat) => {
+    const matchesSearch = flat.title.toLowerCase().includes(search.toLowerCase());
+    const matchesMinPrice = flat.price >= filters.minPrice;
+    const matchesMaxPrice = flat.price <= filters.maxPrice;
+    const matchesBedrooms = flat.bedrooms >= filters.bedrooms;
+    // Radius filter is not implemented here, but you could add it if you have location data
+    return matchesSearch && matchesMinPrice && matchesMaxPrice && matchesBedrooms;
+  });
 
   if (loading) {
     return (
@@ -76,42 +92,52 @@ export default function ListingsPage() {
   }
 
   return (
-    <div className=" p-6 ">
-      <div className="ml-5 md:ml-25">
-        <h1 className="text-3xl font-bold mb-2 ">Apartment Listings</h1>
-        <p className="mb-6">Here you can browse all available apartments.</p>
-
-        <SearchBar value={search} onChange={(e) => setSearch(e.target.value)} />
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="md:col-span-1">
+        {/* <Sidebar filters={filters} onFilterChange={setFilters} /> */}
       </div>
-      <>
-        {flats.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600 dark:text-gray-400 text-lg">No apartments found.</p>
+      <div className="md:col-span-3">
+        <div className="flex">
+          <div className="flex-1 p-6 ">
+            <div className="ml-5 md:ml-25">
+              <h1 className="text-3xl font-bold mb-2 ">Apartment Listings</h1>
+              <p className="mb-6">Here you can browse all available apartments.</p>
+
+              <SearchBar value={search} onChange={(e) => setSearch(e.target.value)} />
+            </div>
+            <>
+              {filteredFlats.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-600 dark:text-gray-400 text-lg">No apartments found.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 max-w-5xl mx-auto px-2">
+                  {filteredFlats.map((flat, index) => {
+                    // console.log(`Data passed to ListingCard for "${flat.title}":`, { images: flat.images }); // Removed for ESLint
+
+                    return <ListingCard key={index} apartment={flat} priority={index < 3} />;
+                  })}
+                </div>
+              )}
+            </>
+            <div className="pagination-controls flex justify-between mt-5">
+              <button disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                « Prev
+              </button>
+
+              <span className="mt-2">
+                Page {page} of {pages}
+              </span>
+
+              <button
+                disabled={page === pages}
+                onClick={() => setPage((p) => Math.min(pages, p + 1))}
+              >
+                Next »
+              </button>
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 max-w-5xl mx-auto px-2">
-            {filteredFlats.map((flat, index) => {
-              console.log(`Data passed to ListingCard for "${flat.title}":`, {
-                images: flat.images,
-              });
-
-              return <ListingCard key={index} apartment={flat} priority={index < 3} />;
-            })}
-          </div>
-        )}
-      </>
-      <div className="pagination-controls flex justify-between mt-5">
-        <button disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-          « Prev
-        </button>
-
-        <span className="mt-2">
-          Page {page} of {pages}
-        </span>
-
-        <button disabled={page === pages} onClick={() => setPage((p) => Math.min(pages, p + 1))}>
-          Next »
-        </button>
+        </div>
       </div>
     </div>
   );

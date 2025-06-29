@@ -24,8 +24,8 @@
   },
   "lint-staged": {
     "src/**/*.{js,jsx,ts,tsx}": [
-      "eslint --fix --ignore-path .eslintignore",
-      "prettier --write --ignore-path .prettierignore"
+      "eslint --fix",
+      "prettier --write"
     ],
     "!mongodb-optimize.js": "echo 'Skipping mongodb-optimize.js'",
     "!**/mongodb-optimize.js": "echo 'Skipping mongodb-optimize.js'"

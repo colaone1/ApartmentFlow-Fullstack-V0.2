@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-export default function Sidebar({ filters = {}, onFilterChange }) {
+export default function Sidebar({ filters = {}, onFilterChange = () => {} }) {
   const { minPrice = 0, maxPrice = 3000, bedrooms = 0, radius = 10 } = filters;
 
   const handleChange = (field, value) => {
@@ -32,7 +32,7 @@ export default function Sidebar({ filters = {}, onFilterChange }) {
           max="3000"
           step="50"
           value={minPrice}
-          onChange={(e) => handleChange("minPrice", e.target.value)}
+          onChange={(e) => handleChange('minPrice', e.target.value)}
           className="w-full"
         />
       </div>
@@ -46,7 +46,7 @@ export default function Sidebar({ filters = {}, onFilterChange }) {
           max="5000"
           step="50"
           value={maxPrice}
-          onChange={(e) => handleChange("maxPrice", e.target.value)}
+          onChange={(e) => handleChange('maxPrice', e.target.value)}
           className="w-full"
         />
       </div>
@@ -60,7 +60,7 @@ export default function Sidebar({ filters = {}, onFilterChange }) {
           max="5"
           step="1"
           value={bedrooms}
-          onChange={(e) => handleChange("bedrooms", e.target.value)}
+          onChange={(e) => handleChange('bedrooms', e.target.value)}
           className="w-full"
         />
       </div>
@@ -74,7 +74,7 @@ export default function Sidebar({ filters = {}, onFilterChange }) {
           max="50"
           step="1"
           value={radius}
-          onChange={(e) => handleChange("radius", e.target.value)}
+          onChange={(e) => handleChange('radius', e.target.value)}
           className="w-full"
         />
       </div>
