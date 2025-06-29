@@ -17,6 +17,7 @@
 13. [Build Process Issues](#build-process-issues)
 14. [Quick Reference](#quick-reference)
 15. [Rate Limiting and Test Payload Validity](#rate-limiting-and-test-payload-validity)
+16. [Modern ESLint & Lint-Staged Troubleshooting (2024)](#modern-eslint-&-lint-staged-troubleshooting-2024)
 
 ---
 
@@ -1347,6 +1348,48 @@ npm test -- --testNamePattern="should create"
 8. **Use proper assertions** with meaningful error messages
 9. **Keep tests fast** by optimizing database operations and using mocks
 10. **Document complex test scenarios** with comments explaining the test setup
+
+---
+
+## Modern ESLint & Lint-Staged Troubleshooting (2024)
+
+### Issue: Pre-commit hook fails with 'Invalid option --ignore-path' or '.eslintignore is no longer supported'
+
+**Symptoms:**
+
+- Commit is blocked by Husky/lint-staged with errors about deprecated ESLint flags or .eslintignore.
+- Error: `Invalid option '--ignore-path' - perhaps you meant '--ignore-pattern'?`
+- Error: `The ".eslintignore" file is no longer supported. Switch to using the "ignores" property in "eslint.config.js".`
+
+**Fix:**
+
+1. Move ignore patterns from `.eslintignore` to the `ignores` property in `eslint.config.js`.
+2. Remove any `--ignore-path` or `.eslintignore` references from all lint-staged configs (check both frontend and backend `package.json`).
+3. Use only `eslint --fix` and `prettier --write` in lint-staged for JS/TS files.
+
+**Example lint-staged config:**
+
+```json
+"lint-staged": {
+  "src/**/*.{js,jsx,ts,tsx}": [
+    "eslint --fix",
+    "prettier --write"
+  ],
+  "*.{js,jsx,ts,tsx,json,css,md}": [
+    "prettier --write"
+  ]
+}
+```
+
+**Why:**
+
+- Modern ESLint (v9+) and Next.js no longer support `.eslintignore` or the `--ignore-path` flag.
+- All ignores must be in `eslint.config.js`.
+- Lint-staged must not use deprecated flags or it will block commits.
+
+**Tip:**
+
+- If you have both frontend and backend, check both for old lint-staged configs!
 
 ---
 
