@@ -26,7 +26,7 @@ describe('GET /api/commute/suggestions', () => {
 
     const res = await request(app)
       .get('/api/commute/suggestions')
-      .query({ query: '1600 Amphitheatre Parkway' })
+      .query({ q: '1600 Amphitheatre Parkway' })
       .expect(200);
 
     expect(Array.isArray(res.body)).toBe(true);
@@ -59,7 +59,7 @@ describe('GET /api/commute/suggestions', () => {
 
     const res = await request(app)
       .get('/api/commute/suggestions')
-      .query({ query: 'test query' })
+      .query({ q: 'test query' })
       .expect(500);
 
     expect(res.body).toHaveProperty('error');
