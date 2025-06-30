@@ -334,12 +334,53 @@ export default function ApartmentDetailPage() {
     setCommuteLoading(true);
     setCommuteError('');
     setCommuteResult(null);
+
     try {
+      console.log('Calculating commute from apartment:', params.id, 'to:', commuteAddress);
+
       const apiClient = new ApiClient();
-      const res = await apiClient.getCommuteTime(params.id, commuteAddress);
-      setCommuteResult(res.data?.data || null);
+
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out')), 30000)
+      );
+
+      const commutePromise = apiClient.getCommuteTime(params.id, commuteAddress);
+      const res = await Promise.race([commutePromise, timeoutPromise]);
+
+      console.log('Commute calculation result:', res);
+
+      if (res.data?.data) {
+        setCommuteResult(res.data.data);
+      } else {
+        setCommuteError('No route found between the apartment and destination');
+      }
     } catch (err) {
-      setCommuteError(err.response?.data?.error || 'Failed to calculate commute');
+      console.error('Commute calculation error:', err);
+
+      let errorMessage = 'Failed to calculate commute';
+
+      if (err.message === 'Request timed out') {
+        errorMessage = 'Request timed out. Please try again.';
+      } else if (err.response?.data?.error) {
+        const backendError = err.response.data.error;
+        if (backendError.includes('No route found')) {
+          errorMessage =
+            'No route found between the apartment and destination. Please try a different address.';
+        } else if (backendError.includes('not found')) {
+          errorMessage = 'Apartment location not available.';
+        } else if (backendError.includes('not configured')) {
+          errorMessage = 'Routing service temporarily unavailable.';
+        } else {
+          errorMessage = backendError;
+        }
+      } else if (err.response?.status === 404) {
+        errorMessage = 'Apartment not found.';
+      } else if (err.response?.status === 500) {
+        errorMessage = 'Server error. Please try again later.';
+      }
+
+      setCommuteError(errorMessage);
     } finally {
       setCommuteLoading(false);
     }
@@ -776,14 +817,78 @@ export default function ApartmentDetailPage() {
                     {commuteLoading ? 'Calculating...' : 'Calculate Commute'}
                   </button>
                 </form>
-                {commuteError && <div className="text-red-600 text-sm mb-2">{commuteError}</div>}
+                {commuteError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-2">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <svg
+                          className="h-5 w-5 text-red-400"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-red-800">
+                          Commute calculation failed
+                        </h3>
+                        <div className="mt-1 text-sm text-red-700">{commuteError}</div>
+                        <div className="mt-2 text-xs text-red-600">
+                          Try entering a different address or check if the apartment has a valid
+                          location.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {commuteResult && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
-                    <div className="font-semibold text-blue-800">Commute Result</div>
-                    <div className="text-gray-700 text-sm mt-1">
-                      Distance: {commuteResult.distance?.text || commuteResult.distance || 'N/A'}
-                      <br />
-                      Duration: {commuteResult.duration?.text || commuteResult.duration || 'N/A'}
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-2">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <svg
+                          className="h-5 w-5 text-green-400"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-green-800">
+                          Commute calculated successfully
+                        </h3>
+                        <div className="mt-2 space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-green-700">Distance:</span>
+                            <span className="font-medium text-green-800">
+                              {commuteResult.distance?.text || commuteResult.distance || 'N/A'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-green-700">Duration:</span>
+                            <span className="font-medium text-green-800">
+                              {commuteResult.duration?.text || commuteResult.duration || 'N/A'}
+                            </span>
+                          </div>
+                          {commuteResult.mode && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-green-700">Mode:</span>
+                              <span className="font-medium text-green-800 capitalize">
+                                {commuteResult.mode}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}

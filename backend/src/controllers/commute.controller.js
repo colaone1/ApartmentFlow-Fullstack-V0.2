@@ -15,12 +15,24 @@ exports.getCommuteTime = async (req, res) => {
   try {
     const { apartmentId, destination, mode = 'driving' } = req.body;
 
+    // Check if ORS API key is available
+    if (!process.env.ORS_API_KEY) {
+      console.error('ORS_API_KEY not found in environment variables');
+      return res.status(500).json({ error: 'Routing service not configured' });
+    }
+
     // Get apartment location
     const apartment = await Apartment.findById(apartmentId);
     if (!apartment) {
       return res.status(404).json({ error: 'Apartment not found' });
     }
+
+    if (!apartment.location || !apartment.location.coordinates) {
+      return res.status(400).json({ error: 'Apartment location not available' });
+    }
+
     const [originLng, originLat] = apartment.location.coordinates;
+    console.log('Origin coordinates:', { originLng, originLat });
 
     // Geocode destination using Nominatim
     const nominatimRes = await axios.get('https://nominatim.openstreetmap.org/search', {
@@ -38,6 +50,7 @@ exports.getCommuteTime = async (req, res) => {
     }
     const destLat = parseFloat(nominatimRes.data[0].lat);
     const destLng = parseFloat(nominatimRes.data[0].lon);
+    console.log('Destination coordinates:', { destLng, destLat });
 
     // Map mode to ORS profile
     const modeMap = {
@@ -51,6 +64,7 @@ exports.getCommuteTime = async (req, res) => {
     // Call OpenRouteService Directions API
     let orsRes;
     try {
+      console.log('Calling ORS API with profile:', profile);
       orsRes = await axios.post(
         'https://api.openrouteservice.org/v2/directions/' + profile,
         {
@@ -66,6 +80,7 @@ exports.getCommuteTime = async (req, res) => {
           },
         }
       );
+      console.log('ORS API response status:', orsRes.status);
     } catch (orsError) {
       console.error('ORS API error:', orsError.response?.data || orsError.message);
       return res
@@ -77,6 +92,7 @@ exports.getCommuteTime = async (req, res) => {
     }
 
     if (!orsRes.data || !orsRes.data.features || !orsRes.data.features[0]) {
+      console.error('ORS API returned no route data:', orsRes.data);
       return res.status(404).json({ error: 'No route found between origin and destination' });
     }
 
