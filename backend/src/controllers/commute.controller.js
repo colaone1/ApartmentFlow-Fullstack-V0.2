@@ -13,107 +13,77 @@ const mapsClient = new GoogleMapsClient(process.env.GOOGLE_MAPS_API_KEY);
  */
 exports.getCommuteTime = async (req, res) => {
   try {
-    const { apartmentId, destination, mode = 'driving' } = req.body;
-
-    // Check if ORS API key is available
-    if (!process.env.ORS_API_KEY) {
-      console.error('ORS_API_KEY not found in environment variables');
-      return res.status(500).json({ error: 'Routing service not configured' });
+    const { apartmentId, destination, lat, lon, mode = 'driving' } = req.body;
+    const hereApiKey = process.env.HERE_API_KEY;
+    if (!hereApiKey) {
+      return res.status(500).json({ error: 'HERE API key not configured' });
     }
 
     // Get apartment location
     const apartment = await Apartment.findById(apartmentId);
-    if (!apartment) {
-      return res.status(404).json({ error: 'Apartment not found' });
+    if (!apartment || !apartment.location || !apartment.location.coordinates) {
+      return res.status(404).json({ error: 'Apartment location not found' });
     }
-
-    if (!apartment.location || !apartment.location.coordinates) {
-      return res.status(400).json({ error: 'Apartment location not available' });
-    }
-
     const [originLng, originLat] = apartment.location.coordinates;
-    console.log('Origin coordinates:', { originLng, originLat });
 
-    // Geocode destination using Nominatim
-    const nominatimRes = await axios.get('https://nominatim.openstreetmap.org/search', {
+    // Get destination coordinates
+    let destLatNum, destLngNum, destinationDisplayName;
+    if (lat && lon) {
+      destLatNum = parseFloat(lat);
+      destLngNum = parseFloat(lon);
+      destinationDisplayName = destination;
+    } else {
+      // Use HERE Geocoding API
+      const geoRes = await axios.get(`https://geocode.search.hereapi.com/v1/geocode`, {
+        params: { q: destination, apiKey: hereApiKey, limit: 1 },
+      });
+      if (!geoRes.data.items || geoRes.data.items.length === 0) {
+        return res.status(404).json({ error: 'Destination address not found' });
+      }
+      destLatNum = geoRes.data.items[0].position.lat;
+      destLngNum = geoRes.data.items[0].position.lng;
+      destinationDisplayName = geoRes.data.items[0].address.label;
+    }
+
+    // Map mode to HERE transportMode
+    const modeMap = {
+      driving: 'car',
+      walking: 'pedestrian',
+      bicycling: 'bicycle',
+      cycling: 'bicycle',
+    };
+    const transportMode = modeMap[mode] || 'car';
+
+    // Call HERE Routing API
+    const routingUrl = `https://router.hereapi.com/v8/routes`;
+    const routingRes = await axios.get(routingUrl, {
       params: {
-        q: destination,
-        format: 'json',
-        limit: 1,
-      },
-      headers: {
-        'User-Agent': 'ApartmentSearch/1.0',
+        apiKey: hereApiKey,
+        origin: `${originLat},${originLng}`,
+        destination: `${destLatNum},${destLngNum}`,
+        transportMode,
+        return: 'summary',
       },
     });
-    if (!nominatimRes.data || nominatimRes.data.length === 0) {
-      return res.status(404).json({ error: 'Destination address not found' });
-    }
-    const destLat = parseFloat(nominatimRes.data[0].lat);
-    const destLng = parseFloat(nominatimRes.data[0].lon);
-    console.log('Destination coordinates:', { destLng, destLat });
 
-    // Map mode to ORS profile
-    const modeMap = {
-      driving: 'driving-car',
-      walking: 'foot-walking',
-      bicycling: 'cycling-regular',
-      transit: 'driving-car', // ORS does not support transit, fallback to driving
-    };
-    const profile = modeMap[mode] || 'driving-car';
-
-    // Call OpenRouteService Directions API
-    let orsRes;
-    try {
-      console.log('Calling ORS API with profile:', profile);
-      orsRes = await axios.post(
-        'https://api.openrouteservice.org/v2/directions/' + profile,
-        {
-          coordinates: [
-            [originLng, originLat],
-            [destLng, destLat],
-          ],
-        },
-        {
-          headers: {
-            Authorization: process.env.ORS_API_KEY,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      console.log('ORS API response status:', orsRes.status);
-    } catch (orsError) {
-      console.error('ORS API error:', orsError.response?.data || orsError.message);
-      return res
-        .status(502)
-        .json({
-          error: 'Routing provider error',
-          details: orsError.response?.data || orsError.message,
-        });
-    }
-
-    if (!orsRes.data || !orsRes.data.features || !orsRes.data.features[0]) {
-      console.error('ORS API returned no route data:', orsRes.data);
+    if (!routingRes.data.routes || routingRes.data.routes.length === 0) {
       return res.status(404).json({ error: 'No route found between origin and destination' });
     }
 
-    const route = orsRes.data.features[0];
-    const summary = route.properties.summary;
-    const distanceKm = summary.distance / 1000;
-    const durationMin = summary.duration / 60;
-
+    const summary = routingRes.data.routes[0].sections[0].summary;
     res.json({
       success: true,
       data: {
         distance: {
-          value: summary.distance,
-          text: `${distanceKm.toFixed(2)} km`,
+          value: summary.length,
+          text: `${(summary.length / 1000).toFixed(2)} km`,
         },
         duration: {
           value: summary.duration,
-          text: `${durationMin.toFixed(1)} min`,
+          text: `${(summary.duration / 60).toFixed(1)} min`,
         },
-        mode: profile,
-        destination: nominatimRes.data[0].display_name,
+        mode: transportMode,
+        destination: destinationDisplayName,
       },
     });
   } catch (error) {

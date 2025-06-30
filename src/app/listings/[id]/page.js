@@ -56,6 +56,11 @@ export default function ApartmentDetailPage() {
   const [commuteLoading, setCommuteLoading] = useState(false);
   const [commuteError, setCommuteError] = useState('');
   const [commuteResult, setCommuteResult] = useState(null);
+  const [commuteDestination, setCommuteDestination] = useState({
+    address: '',
+    lat: null,
+    lon: null,
+  });
   const commuteInputRef = useRef();
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
@@ -324,8 +329,15 @@ export default function ApartmentDetailPage() {
   // Handle selecting a suggestion
   const handleSuggestionClick = (suggestion) => {
     setCommuteAddress(suggestion.address);
+    setCommuteDestination({
+      address: suggestion.address,
+      lat: suggestion.lat,
+      lon: suggestion.lon,
+    });
     setCommuteSuggestions([]);
-    if (commuteInputRef.current) commuteInputRef.current.blur();
+    if (commuteInputRef.current) {
+      commuteInputRef.current.value = suggestion.address;
+    }
   };
 
   // Handle commute calculation
@@ -334,53 +346,30 @@ export default function ApartmentDetailPage() {
     setCommuteLoading(true);
     setCommuteError('');
     setCommuteResult(null);
-
     try {
-      console.log('Calculating commute from apartment:', params.id, 'to:', commuteAddress);
-
+      console.log('Calculating commute from apartment:', params.id, 'to:', commuteDestination);
       const apiClient = new ApiClient();
-
-      // Add timeout to prevent hanging
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Request timed out')), 30000)
       );
-
-      const commutePromise = apiClient.getCommuteTime(params.id, commuteAddress);
+      // Send lat/lon if available, otherwise fallback to address string
+      const commutePromise = apiClient.getCommuteTime(
+        params.id,
+        commuteDestination.address,
+        commuteDestination.lat,
+        commuteDestination.lon
+      );
       const res = await Promise.race([commutePromise, timeoutPromise]);
-
       console.log('Commute calculation result:', res);
-
-      if (res.data?.data) {
-        setCommuteResult(res.data.data);
+      if (res.error) {
+        setCommuteError(res.error);
+      } else if (res.success && res.data) {
+        setCommuteResult(res.data);
       } else {
-        setCommuteError('No route found between the apartment and destination');
+        setCommuteError('Unknown error calculating commute');
       }
     } catch (err) {
-      console.error('Commute calculation error:', err);
-
-      let errorMessage = 'Failed to calculate commute';
-
-      if (err.message === 'Request timed out') {
-        errorMessage = 'Request timed out. Please try again.';
-      } else if (err.response?.data?.error) {
-        const backendError = err.response.data.error;
-        if (backendError.includes('No route found')) {
-          errorMessage =
-            'No route found between the apartment and destination. Please try a different address.';
-        } else if (backendError.includes('not found')) {
-          errorMessage = 'Apartment location not available.';
-        } else if (backendError.includes('not configured')) {
-          errorMessage = 'Routing service temporarily unavailable.';
-        } else {
-          errorMessage = backendError;
-        }
-      } else if (err.response?.status === 404) {
-        errorMessage = 'Apartment not found.';
-      } else if (err.response?.status === 500) {
-        errorMessage = 'Server error. Please try again later.';
-      }
-
-      setCommuteError(errorMessage);
+      setCommuteError(err.message || 'Failed to calculate commute');
     } finally {
       setCommuteLoading(false);
     }

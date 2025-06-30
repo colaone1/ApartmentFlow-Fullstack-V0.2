@@ -18,6 +18,8 @@ export default function ListingsPage() {
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [limit] = useState(6);
+  const [favoriteIds, setFavoriteIds] = useState(new Set());
+  const [toggleLoading, setToggleLoading] = useState(false);
 
   // Add filter state - make it mutable
   const [filters, setFilters] = useState({
@@ -35,23 +37,32 @@ export default function ListingsPage() {
           window.location.href = 'auth/unauthorized';
           return;
         }
-        // Pass filters to API
-        const response = await apiClient.getApartments(page, limit, filters);
+
+        // Fetch apartments and user data in parallel
+        const [apartmentsResponse, userData] = await Promise.all([
+          apiClient.getApartments(page, limit, filters),
+          apiClient.getUser(),
+        ]);
+
         // eslint-disable-next-line no-console
-        console.log('API response:', response.data);
-        if (Array.isArray(response.data.apartments)) {
+        console.log('API response:', apartmentsResponse.data);
+        if (Array.isArray(apartmentsResponse.data.apartments)) {
           // eslint-disable-next-line no-console
-          console.log('Apartments data received from API:', response.data.apartments);
-          setFlats(response.data.apartments);
+          console.log('Apartments data received from API:', apartmentsResponse.data.apartments);
+          setFlats(apartmentsResponse.data.apartments);
         } else {
           setFlats([]);
         }
-        setPages(response.data.pages);
+        setPages(apartmentsResponse.data.pages);
+
+        // Set favorite IDs from user data
+        setFavoriteIds(new Set(userData.favorites || []));
       } catch (err) {
         // eslint-disable-next-line no-console
-        console.error('Error fetching apartments:', err);
+        console.error('Error fetching apartments or favorites:', err);
         setError(
-          err.response?.data?.message || 'Failed to fetch apartments. Please try again later.'
+          err.response?.data?.message ||
+            'Failed to fetch apartments or favorites. Please try again later.'
         );
       } finally {
         setLoading(false);
@@ -63,6 +74,28 @@ export default function ListingsPage() {
       fetchFlats();
     }
   }, [page, limit, filters]);
+
+  const toggleFavorite = async (apartmentId) => {
+    setToggleLoading(true);
+    try {
+      const apiClient = new ApiClient();
+      if (favoriteIds.has(apartmentId)) {
+        await apiClient.removeFavorite(apartmentId);
+        setFavoriteIds((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(apartmentId);
+          return newSet;
+        });
+      } else {
+        await apiClient.addFavorite(apartmentId);
+        setFavoriteIds((prev) => new Set(prev).add(apartmentId));
+      }
+    } catch (err) {
+      console.error('Failed to toggle favorite', err);
+    } finally {
+      setToggleLoading(false);
+    }
+  };
 
   // Filter on client side as well
   const filteredFlats = (flats || []).filter((flat) => {
@@ -123,7 +156,12 @@ export default function ListingsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredFlats.map((flat, index) => (
                 <div key={flat._id || index} className="h-full">
-                  <ListingCard apartment={flat} priority={index < 3} />
+                  <ListingCard
+                    apartment={flat}
+                    priority={index < 3}
+                    isFavorited={favoriteIds.has(flat._id)}
+                    onToggleFavorite={() => toggleFavorite(flat._id)}
+                  />
                 </div>
               ))}
             </div>

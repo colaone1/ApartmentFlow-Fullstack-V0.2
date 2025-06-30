@@ -177,6 +177,11 @@ This document provides a comprehensive assessment of your project against the ma
 - **Documentation:** Comprehensive README and API docs
 - **Testing Strategy:** Unit, integration, and end-to-end testing
 
+### Commute Calculation Issue and Solution
+
+- **Issue:** ORS was unreliable for local/short routes; Google/Mapbox required a card for API access.
+- **Solution:** Switched to HERE Routing API for backend commute calculations, which is reliable and does not require a card for the free tier.
+
 ---
 
 ## **📈 Areas for Final Polish**

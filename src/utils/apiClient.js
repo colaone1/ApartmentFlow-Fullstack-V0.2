@@ -14,7 +14,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5
  * - Cache-friendly request patterns
  */
 export class ApiClient {
-  constructor(getAuthToken, clearAuthToken) {
+  constructor(getAuthToken = null, clearAuthToken = null) {
     this.getAuthToken = getAuthToken;
     this.clearAuthToken = clearAuthToken;
 
@@ -198,6 +198,7 @@ export class ApiClient {
 
   async register(name, email, password) {
     const response = await this.apiCall('post', '/auth/register', { name, email, password });
+
     if (response.data && response.data.token) {
       this.setToken(response.data.token);
       return response;
@@ -207,9 +208,13 @@ export class ApiClient {
   }
 
   // AI-OPTIMIZED: User profile methods
-  async getProfile() {
+  async getUser() {
     const response = await this.apiCall('get', '/users/profile');
-    return response;
+    return response.data;
+  }
+
+  async getProfile() {
+    return this.getUser();
   }
 
   async updateProfile(data) {
@@ -284,9 +289,14 @@ export class ApiClient {
   }
 
   // AI-OPTIMIZED: Commute API methods
-  async getCommuteTime(apartmentId, destination, mode = 'driving') {
-    const response = await this.apiCall('post', '/commute', { apartmentId, destination, mode });
-    return response;
+  async getCommuteTime(apartmentId, destination, lat = null, lon = null, mode = 'driving') {
+    // If lat/lon are provided, send them to the backend
+    const body =
+      lat && lon
+        ? { apartmentId, destination, lat, lon, mode }
+        : { apartmentId, destination, mode };
+    const response = await this.apiCall('post', '/commute', body);
+    return response.data;
   }
 
   async getAddressSuggestions(query) {

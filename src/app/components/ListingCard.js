@@ -8,14 +8,14 @@ import { useAuth } from '../context/AuthContext';
 import FavoriteButton from './FavoriteButton';
 import ApiClient from '@/utils/apiClient';
 
-const ListingCard = ({ apartment, priority = false, onFavoriteChange }) => {
+const ListingCard = ({ apartment, priority = false, isFavorited = false, onToggleFavorite }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const auth = (useAuth && useAuth()) || {};
   // eslint-disable-next-line no-unused-vars
   const { user, isLoggedIn } = auth;
   const apiClient = new ApiClient();
-  const [isFavorited, setIsFavorited] = useState(apartment.isFavorited || false);
+  const [internalFavorited, setInternalFavorited] = useState(isFavorited);
 
   const {
     title = 'Untitled',
@@ -104,17 +104,22 @@ const ListingCard = ({ apartment, priority = false, onFavoriteChange }) => {
 
   const displayAmenities = formatAmenities(amenities);
 
+  // Update internal state when prop changes
+  useEffect(() => {
+    setInternalFavorited(isFavorited);
+  }, [isFavorited]);
+
   const handleFavoriteClick = async (apartmentId) => {
     if (!isLoggedIn) return;
     try {
-      if (isFavorited) {
+      if (internalFavorited) {
         await apiClient.removeFavorite(apartmentId);
-        setIsFavorited(false);
-        if (typeof onFavoriteChange === 'function') onFavoriteChange(apartmentId, false);
+        setInternalFavorited(false);
+        if (typeof onToggleFavorite === 'function') onToggleFavorite(apartmentId);
       } else {
         await apiClient.addFavorite(apartmentId);
-        setIsFavorited(true);
-        if (typeof onFavoriteChange === 'function') onFavoriteChange(apartmentId, true);
+        setInternalFavorited(true);
+        if (typeof onToggleFavorite === 'function') onToggleFavorite(apartmentId);
       }
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -128,7 +133,7 @@ const ListingCard = ({ apartment, priority = false, onFavoriteChange }) => {
       <div className="absolute top-2 right-2 z-10">
         <FavoriteButton
           apartmentId={apartment._id}
-          isInitiallyFavorited={isFavorited}
+          isInitiallyFavorited={internalFavorited}
           onClick={handleFavoriteClick}
         />
       </div>

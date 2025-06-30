@@ -1450,3 +1450,24 @@ _Part of the Apartment Search Project Troubleshooting Suite_
 - Use `console.log` to verify environment and config.
 - Restart servers after any config or .env change.
 - Use process managers or kill commands to avoid zombie processes.
+
+## Commute Calculation Issues and Solutions
+
+### Problem
+
+- **OpenRouteService (ORS) API** was unreliable for short/local routes, often returning "No route found between origin and destination" even for valid addresses.
+- **Google Maps Directions API** required a credit card for API key access, which was not desirable for this project.
+- **Mapbox Directions API** sometimes required a card for new accounts, depending on region/account type.
+
+### Solution
+
+- Switched backend commute calculation to use **HERE Routing API** (https://developer.here.com/), which offers a generous free tier and does not require a card for API key access.
+- Updated backend code to use HERE for both geocoding and routing, ensuring reliable commute time/distance calculations for all valid addresses.
+- Removed ORS API key and code from the project for clarity and security.
+
+#### Implementation Summary
+
+- Added HERE API key to `.env` as `HERE_API_KEY`.
+- Updated `backend/src/controllers/commute.controller.js` to use HERE Geocoding and Routing APIs.
+- Installed `axios` in the backend for HTTP requests.
+- Verified with backend tests and real-world addresses.
