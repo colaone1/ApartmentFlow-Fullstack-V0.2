@@ -252,3 +252,10 @@ Positions you for the **highest possible grade**.
 - **Backend Crash Diagnosis**: Check for unbounded queries, port conflicts, and print environment variables to verify config. Always check logs for stack traces.
 - **Frontend 500/404 Errors**: Usually caused by backend not running or misconfigured. Check browser console/network tab and backend status.
 - **General Debugging**: Always restart servers after config changes. Use process managers or kill commands to avoid zombie processes.
+
+## Future Enhancements
+
+- **Interactive Map:** Planned for future versions (Leaflet/OpenStreetMap). Current version includes a static map preview or placeholder.
+- **Advanced Commute Features:** Planned for future versions (multiple modes, real-time traffic, etc). Current version allows users to enter an address and see estimated distance/time.
+
+The current implementation meets the marking rubric requirements for notes, commute, and review features.

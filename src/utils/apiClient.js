@@ -282,6 +282,20 @@ export class ApiClient {
     const response = await this.apiCall('delete', `/favorites/${apartmentId}`);
     return response;
   }
+
+  // AI-OPTIMIZED: Commute API methods
+  async getCommuteTime(apartmentId, destination, mode = 'driving') {
+    const response = await this.apiCall('post', '/commute', { apartmentId, destination, mode });
+    return response;
+  }
+
+  async getAddressSuggestions(query) {
+    const response = await this.apiCall(
+      'get',
+      `/commute/suggestions?q=${encodeURIComponent(query)}`
+    );
+    return response;
+  }
 }
 
 // AI-OPTIMIZED: Export singleton instance for consistent usage

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 // eslint-disable-next-line no-unused-vars
 import Image from 'next/image';
@@ -51,6 +51,12 @@ export default function ApartmentDetailPage() {
     sortBy: 'newest',
   });
   const [message, setMessage] = useState('');
+  const [commuteAddress, setCommuteAddress] = useState('');
+  const [commuteSuggestions, setCommuteSuggestions] = useState([]);
+  const [commuteLoading, setCommuteLoading] = useState(false);
+  const [commuteError, setCommuteError] = useState('');
+  const [commuteResult, setCommuteResult] = useState(null);
+  const commuteInputRef = useRef();
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
@@ -295,6 +301,49 @@ export default function ApartmentDetailPage() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [imageUrls.length]);
+
+  // Fetch address suggestions as user types
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (!commuteAddress || commuteAddress.length < 3) {
+        setCommuteSuggestions([]);
+        return;
+      }
+      try {
+        const apiClient = new ApiClient();
+        const res = await apiClient.getAddressSuggestions(commuteAddress);
+        setCommuteSuggestions(res.data || []);
+      } catch (err) {
+        setCommuteSuggestions([]);
+      }
+    };
+    const timeout = setTimeout(fetchSuggestions, 400);
+    return () => clearTimeout(timeout);
+  }, [commuteAddress]);
+
+  // Handle selecting a suggestion
+  const handleSuggestionClick = (suggestion) => {
+    setCommuteAddress(suggestion.address);
+    setCommuteSuggestions([]);
+    if (commuteInputRef.current) commuteInputRef.current.blur();
+  };
+
+  // Handle commute calculation
+  const handleCommuteSubmit = async (e) => {
+    e.preventDefault();
+    setCommuteLoading(true);
+    setCommuteError('');
+    setCommuteResult(null);
+    try {
+      const apiClient = new ApiClient();
+      const res = await apiClient.getCommuteTime(params.id, commuteAddress);
+      setCommuteResult(res.data?.data || null);
+    } catch (err) {
+      setCommuteError(err.response?.data?.error || 'Failed to calculate commute');
+    } finally {
+      setCommuteLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -655,12 +704,12 @@ export default function ApartmentDetailPage() {
             </div>
 
             {/* Location Map Placeholder */}
-            <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Location</h3>
               {location?.coordinates &&
               Array.isArray(location.coordinates) &&
               location.coordinates.length === 2 ? (
-                <div className="h-48 rounded-lg overflow-hidden">
+                <div className="h-48 rounded-lg overflow-hidden mb-4">
                   <MapContainer
                     center={[location.coordinates[1], location.coordinates[0]]}
                     zoom={15}
@@ -685,10 +734,60 @@ export default function ApartmentDetailPage() {
                   </MapContainer>
                 </div>
               ) : (
-                <div className="bg-gray-200 h-48 rounded-lg flex items-center justify-center">
+                <div className="bg-gray-200 h-48 rounded-lg flex items-center justify-center mb-4">
                   <p className="text-gray-500">Map not available</p>
                 </div>
               )}
+              {/* Commute Feature */}
+              <div className="mt-2">
+                <h4 className="font-semibold text-gray-800 mb-2">Commute to...</h4>
+                <form onSubmit={handleCommuteSubmit} className="mb-2">
+                  <input
+                    ref={commuteInputRef}
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter address (e.g. work, school)"
+                    value={commuteAddress}
+                    onChange={(e) => {
+                      setCommuteAddress(e.target.value);
+                      setCommuteError('');
+                      setCommuteResult(null);
+                    }}
+                    autoComplete="off"
+                  />
+                  {commuteSuggestions.length > 0 && (
+                    <ul className="bg-white border border-gray-200 rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10 absolute w-72">
+                      {commuteSuggestions.map((s) => (
+                        <li
+                          key={s.placeId}
+                          className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
+                          onClick={() => handleSuggestionClick(s)}
+                        >
+                          {s.address}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <button
+                    type="submit"
+                    className="w-full mt-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    disabled={commuteLoading || !commuteAddress}
+                  >
+                    {commuteLoading ? 'Calculating...' : 'Calculate Commute'}
+                  </button>
+                </form>
+                {commuteError && <div className="text-red-600 text-sm mb-2">{commuteError}</div>}
+                {commuteResult && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
+                    <div className="font-semibold text-blue-800">Commute Result</div>
+                    <div className="text-gray-700 text-sm mt-1">
+                      Distance: {commuteResult.distance?.text || commuteResult.distance || 'N/A'}
+                      <br />
+                      Duration: {commuteResult.duration?.text || commuteResult.duration || 'N/A'}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
