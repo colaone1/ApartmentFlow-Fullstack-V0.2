@@ -39,22 +39,6 @@ const performanceMonitor = (req, res, next) => {
       // Headers already sent, skip
     }
 
-    // Log slow requests (over 1 second)
-    if (responseTime > 1000) {
-      console.warn(`SLOW REQUEST: ${req.method} ${req.originalUrl} - ${responseTime.toFixed(2)}ms`);
-    }
-
-    // Log memory spikes (over 50MB increase)
-    if (memoryDiff.heapUsed > 50 * 1024 * 1024) {
-      console.warn(
-        `MEMORY SPIKE: ${req.method} ${req.originalUrl} - +${(
-          memoryDiff.heapUsed /
-          1024 /
-          1024
-        ).toFixed(2)}MB`
-      );
-    }
-
     // Store performance metrics in cache for monitoring
     const metrics = {
       timestamp: new Date().toISOString(),

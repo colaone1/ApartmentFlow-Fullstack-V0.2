@@ -17,35 +17,25 @@ describe('User Profile Management', () => {
   });
 
   beforeEach(async () => {
-    try {
-      // Clear any existing users
-      await User.deleteMany({});
+    // Clear any existing users
+    await User.deleteMany({});
 
-      // Create a test user
-      testUser = await User.create({
-        email: 'test@example.com',
-        password: 'password123',
-        name: 'Test User',
-        profileImage: 'default-avatar.jpg',
-      });
+    // Create a test user
+    testUser = await User.create({
+      email: 'test@example.com',
+      password: 'password123',
+      name: 'Test User',
+      profileImage: 'default-avatar.jpg',
+    });
 
-      // Generate auth token
-      authToken = jwt.sign({ id: testUser._id }, process.env.JWT_SECRET || 'test-secret', {
-        expiresIn: '1d',
-      });
-    } catch (error) {
-      console.error('Error in beforeEach:', error);
-      throw error;
-    }
+    // Generate auth token
+    authToken = jwt.sign({ id: testUser._id }, process.env.JWT_SECRET || 'test-secret', {
+      expiresIn: '1d',
+    });
   });
 
   afterEach(async () => {
-    try {
-      await User.deleteMany({});
-    } catch (error) {
-      console.error('Error in afterEach:', error);
-      throw error;
-    }
+    await User.deleteMany({});
   });
 
   describe('GET /api/users/profile', () => {

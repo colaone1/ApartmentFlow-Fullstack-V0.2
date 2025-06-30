@@ -12,17 +12,12 @@ const NoteCard = ({ note, onEdit, onDelete, isEditing = false }) => {
 
   const handleSave = async () => {
     if (!editForm.title.trim() || !editForm.content.trim()) {
-      alert('Title and content are required');
       return;
     }
 
     setIsLoading(true);
     try {
       await onEdit(note._id, editForm);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to update note:', error);
-      alert('Failed to update note. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -44,13 +39,7 @@ const NoteCard = ({ note, onEdit, onDelete, isEditing = false }) => {
 
     setIsLoading(true);
     try {
-      // eslint-disable-next-line no-console
-      console.log('Deleting note:', note._id);
       await onDelete(note._id);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error deleting note:', error);
-      alert('Failed to delete note. Please try again.');
     } finally {
       setIsLoading(false);
     }

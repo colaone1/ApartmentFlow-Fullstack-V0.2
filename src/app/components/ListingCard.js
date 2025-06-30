@@ -122,8 +122,7 @@ const ListingCard = ({ apartment, priority = false, isFavorited = false, onToggl
         if (typeof onToggleFavorite === 'function') onToggleFavorite(apartmentId);
       }
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Error toggling favorite:', err);
+      // Remove console.error('Error toggling favorite:', err);
     }
   };
 

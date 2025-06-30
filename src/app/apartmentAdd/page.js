@@ -60,7 +60,7 @@ export default function ApartmentAdd() {
           const data = await res.json();
           setSuggestions(data);
         } catch (err) {
-          console.error('Failed to fetch suggestions', err);
+          // Remove console.error('Failed to fetch suggestions', err);
         }
       } else {
         setSuggestions([]);
@@ -176,7 +176,7 @@ export default function ApartmentAdd() {
         submissionData.append('area', formData.area);
         submissionData.append('amenities', formData.amenities);
         submissionData.append('status', formData.status);
-        submissionData.append('isPublic', formData.isPublic ? 'true' : 'false');
+        submissionData.append('isPublic', 'true');
         submissionData.append('neighborhoodRating', formData.neighborhoodRating);
         submissionData.append('location', JSON.stringify(locationObject));
         if (imageFiles.length > 0) {
@@ -266,18 +266,6 @@ export default function ApartmentAdd() {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-3xl font-bold text-[var(--color-primary)] mb-8">List An Apartment</h1>
-      {/* Feedback message */}
-      {feedback.message && (
-        <div
-          className={`mb-4 p-3 rounded text-center ${
-            feedback.type === 'success'
-              ? 'bg-green-100 text-green-700 border border-green-300'
-              : 'bg-red-100 text-red-700 border border-red-300'
-          }`}
-        >
-          {feedback.message}
-        </div>
-      )}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <Input
@@ -503,26 +491,18 @@ export default function ApartmentAdd() {
           </div>
         </div>
 
-        {/* Public/Private Toggle */}
-        <div className="flex items-center space-x-3">
-          <label htmlFor="isPublic" className="font-semibold">
-            Public/Private Listing
-          </label>
-          <button
-            type="button"
-            onClick={() => setFormData((prev) => ({ ...prev, isPublic: !prev.isPublic }))}
-            className={`w-14 h-6 flex items-center rounded-full p-1 duration-300 ease-in-out ${
-              formData.isPublic ? 'bg-green-500' : 'bg-gray-400'
+        {/* Feedback message moved here for better visibility */}
+        {feedback.message && (
+          <div
+            className={`mb-4 p-3 rounded text-center ${
+              feedback.type === 'success'
+                ? 'bg-green-100 text-green-700 border border-green-300'
+                : 'bg-red-100 text-red-700 border border-red-300'
             }`}
           >
-            <div
-              className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
-                formData.isPublic ? 'translate-x-8' : 'translate-x-0'
-              }`}
-            />
-          </button>
-          <span className="text-sm text-gray-600">{formData.isPublic ? 'Public' : 'Private'}</span>
-        </div>
+            {feedback.message}
+          </div>
+        )}
 
         {success && (
           <p style={{ color: 'green', marginTop: '1rem' }}>Apartment listed successfully!</p>

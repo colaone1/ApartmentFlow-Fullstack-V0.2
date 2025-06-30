@@ -35,21 +35,7 @@ export default function ApartmentDetailPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageError, setImageError] = useState(false);
   const [notes, setNotes] = useState([]);
-  const [newNote, setNewNote] = useState({
-    title: '',
-    content: '',
-    category: 'general',
-    priority: 'medium',
-  });
-  const [showNoteForm, setShowNoteForm] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [editingNoteId, setEditingNoteId] = useState(null);
-  const [notesFilter, setNotesFilter] = useState({
-    search: '',
-    category: 'all',
-    priority: 'all',
-    sortBy: 'newest',
-  });
+  const [newNoteContent, setNewNoteContent] = useState('');
   const [message, setMessage] = useState('');
   const [commuteAddress, setCommuteAddress] = useState('');
   const [commuteSuggestions, setCommuteSuggestions] = useState([]);
@@ -62,6 +48,12 @@ export default function ApartmentDetailPage() {
     lon: null,
   });
   const commuteInputRef = useRef();
+  const [neighborhoodRating, setNeighborhoodRating] = useState({
+    average: null,
+    count: 0,
+    userRating: null,
+  });
+  const [ratingLoading, setRatingLoading] = useState(false);
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
@@ -87,17 +79,11 @@ export default function ApartmentDetailPage() {
           return;
         }
 
-        // eslint-disable-next-line no-console
-        console.log('Fetching apartment details for ID:', params.id);
         const response = await apiClient.getApartment(params.id);
         setApartment(response.data);
 
         // Fetch notes for this apartment
-        // eslint-disable-next-line no-console
-        console.log('Fetching notes for apartment:', params.id);
-        const notesResponse = await apiClient.getNotes({ apartmentId: params.id });
-        // eslint-disable-next-line no-console
-        console.log('Notes fetched:', notesResponse.data);
+        const notesResponse = await apiClient.getNotesForApartment(params.id);
         // Fix: set notes to array only
         const notesArr = Array.isArray(notesResponse.data?.data)
           ? notesResponse.data.data
@@ -105,6 +91,10 @@ export default function ApartmentDetailPage() {
           ? notesResponse.data
           : [];
         setNotes(notesArr);
+
+        // Fetch neighborhood rating
+        const ratingResponse = await apiClient.getNeighborhoodRating(params.id);
+        setNeighborhoodRating(ratingResponse.data);
 
         // Check if apartment is in user's favorites
         const favoritesResponse = await apiClient.getFavorites();
@@ -114,10 +104,7 @@ export default function ApartmentDetailPage() {
           ? favoritesResponse.data
           : [];
         const isFav = favoritesArr.some((fav) => fav.apartment === params.id);
-        setIsFavorite(isFav);
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Error fetching apartment:', err);
         setError(err.response?.data?.message || 'Failed to fetch apartment details');
       } finally {
         setLoading(false);
@@ -131,55 +118,18 @@ export default function ApartmentDetailPage() {
 
   const handleAddNote = async (e) => {
     e.preventDefault();
+    if (!newNoteContent.trim()) return;
     try {
       const apiClient = new ApiClient();
-      await apiClient.createNote({
-        apartmentId: params.id,
-        ...newNote,
-      });
-
+      await apiClient.createNote({ apartmentId: params.id, content: newNoteContent });
       // Re-fetch notes after adding
-      const notesResponse = await apiClient.getNotes({ apartmentId: params.id });
-      const notesArr = Array.isArray(notesResponse.data?.data)
-        ? notesResponse.data.data
-        : Array.isArray(notesResponse.data)
-        ? notesResponse.data
-        : [];
-      setNotes(notesArr);
-
-      setNewNote({ title: '', content: '', category: 'general', priority: 'medium' });
-      setShowNoteForm(false);
+      const notesResponse = await apiClient.getNotesForApartment(params.id);
+      setNotes(Array.isArray(notesResponse.data?.data) ? notesResponse.data.data : []);
+      setNewNoteContent('');
       setMessage('Note added successfully!');
-
       setTimeout(() => setMessage(''), 3000);
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Error adding note:', err);
-      alert('Failed to add note. Please try again.');
-    }
-  };
-
-  const handleEditNote = async (noteId, updatedNote, isEditing = false) => {
-    if (isEditing) {
-      setEditingNoteId(noteId);
-      return;
-    }
-
-    try {
-      const apiClient = new ApiClient();
-      const response = await apiClient.updateNote(noteId, updatedNote);
-
-      // Update the notes array with the updated note
-      setNotes(notes.map((note) => (note._id === noteId ? response.data : note)));
-      setEditingNoteId(null);
-      setMessage('Note updated successfully!');
-
-      // Clear message after 3 seconds
-      setTimeout(() => setMessage(''), 3000);
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to update note:', err);
-      alert('Failed to update note. Please try again.');
+      // No need to alert here, as the error handling is done in the component
     }
   };
 
@@ -187,28 +137,22 @@ export default function ApartmentDetailPage() {
     try {
       const apiClient = new ApiClient();
       await apiClient.deleteNote(noteId);
-
       setNotes(notes.filter((note) => note._id !== noteId));
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to delete note:', err);
-      alert('Failed to delete note. Please try again.');
+      // No need to alert here, as the error handling is done in the component
     }
   };
 
-  const handleToggleFavorite = async () => {
-    try {
-      const apiClient = new ApiClient();
-      if (isFavorite) {
-        await apiClient.removeFavorite(params.id);
-      } else {
-        await apiClient.addFavorite(params.id);
-      }
-      setIsFavorite(!isFavorite);
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to toggle favorite:', err);
-    }
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    if (isNaN(date)) return '';
+    return date.toLocaleString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const handleImageNavigation = (direction) => {
@@ -250,63 +194,6 @@ export default function ApartmentDetailPage() {
     );
   };
 
-  // Filter and sort notes
-  const filteredAndSortedNotes = notes
-    .filter((note) => {
-      const matchesSearch =
-        !notesFilter.search ||
-        note.title.toLowerCase().includes(notesFilter.search.toLowerCase()) ||
-        note.content.toLowerCase().includes(notesFilter.search.toLowerCase());
-
-      const matchesCategory =
-        notesFilter.category === 'all' || note.category === notesFilter.category;
-      const matchesPriority =
-        notesFilter.priority === 'all' || note.priority === notesFilter.priority;
-
-      return matchesSearch && matchesCategory && matchesPriority;
-    })
-    .sort((a, b) => {
-      switch (notesFilter.sortBy) {
-        case 'oldest':
-          return new Date(a.createdAt) - new Date(b.createdAt);
-        case 'priority': {
-          const priorityOrder = { high: 3, medium: 2, low: 1 };
-          return priorityOrder[b.priority] - priorityOrder[a.priority];
-        }
-        case 'title':
-          return a.title.localeCompare(b.title);
-        case 'newest':
-        default:
-          return new Date(b.createdAt) - new Date(a.createdAt);
-      }
-    });
-
-  // Debug logging
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log('Notes state:', notes);
-    // eslint-disable-next-line no-console
-    console.log('Notes filter:', notesFilter);
-    // eslint-disable-next-line no-console
-    console.log('Filtered notes:', filteredAndSortedNotes);
-  }, [notes, notesFilter, filteredAndSortedNotes]);
-
-  // Keyboard navigation for image slideshow
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (imageUrls.length <= 1) return;
-
-      if (e.key === 'ArrowLeft') {
-        handleImageNavigation('prev');
-      } else if (e.key === 'ArrowRight') {
-        handleImageNavigation('next');
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [imageUrls.length]);
-
   // Fetch address suggestions as user types
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -347,7 +234,6 @@ export default function ApartmentDetailPage() {
     setCommuteError('');
     setCommuteResult(null);
     try {
-      console.log('Calculating commute from apartment:', params.id, 'to:', commuteDestination);
       const apiClient = new ApiClient();
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Request timed out')), 30000)
@@ -360,7 +246,6 @@ export default function ApartmentDetailPage() {
         commuteDestination.lon
       );
       const res = await Promise.race([commutePromise, timeoutPromise]);
-      console.log('Commute calculation result:', res);
       if (res.error) {
         setCommuteError(res.error);
       } else if (res.success && res.data) {
@@ -372,6 +257,20 @@ export default function ApartmentDetailPage() {
       setCommuteError(err.message || 'Failed to calculate commute');
     } finally {
       setCommuteLoading(false);
+    }
+  };
+
+  const handleSetRating = async (rating) => {
+    setRatingLoading(true);
+    try {
+      const apiClient = new ApiClient();
+      await apiClient.setNeighborhoodRating(params.id, rating);
+      const ratingResponse = await apiClient.getNeighborhoodRating(params.id);
+      setNeighborhoodRating(ratingResponse.data);
+    } catch (err) {
+      // No need to alert here, as the error handling is done in the component
+    } finally {
+      setRatingLoading(false);
     }
   };
 
@@ -438,19 +337,7 @@ export default function ApartmentDetailPage() {
                 {address?.street}, {address?.city}, {address?.state} {address?.zipCode}
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              {getStatusBadge(status)}
-              <button
-                onClick={handleToggleFavorite}
-                className={`p-3 rounded-full transition-colors ${
-                  isFavorite
-                    ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {isFavorite ? '❤️' : '🤍'}
-              </button>
-            </div>
+            <div className="flex items-center gap-4">{getStatusBadge(status)}</div>
           </div>
         </div>
 
@@ -576,121 +463,95 @@ export default function ApartmentDetailPage() {
               )}
             </div>
 
-            {/* Enhanced Notes Section */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">My Notes</h2>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {notes.length} note{notes.length !== 1 ? 's' : ''} •{' '}
-                    {filteredAndSortedNotes.length} showing
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowNoteForm(!showNoteForm)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  {showNoteForm ? 'Cancel' : 'Add Note'}
+            {/* Notes Section */}
+            <section className="bg-white rounded-lg shadow-md p-6 mt-6">
+              <h2 className="text-xl font-bold mb-4">My Notes</h2>
+              <form onSubmit={handleAddNote} className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  className="flex-1 border rounded px-2 py-1"
+                  placeholder="Add a note..."
+                  value={newNoteContent}
+                  onChange={(e) => setNewNoteContent(e.target.value)}
+                />
+                <button type="submit" className="bg-blue-500 text-white px-4 py-1 rounded">
+                  Add
                 </button>
-              </div>
-
-              {/* Success Message */}
-              {message && (
-                <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-                  {message}
-                  <button
-                    onClick={() => setMessage('')}
-                    className="float-right font-bold text-green-700 hover:text-green-900"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-
-              {/* Notes Filter */}
-              {notes.length > 0 && (
-                <NotesFilter filters={notesFilter} onFilterChange={setNotesFilter} />
-              )}
-
-              {/* Add Note Form */}
-              {showNoteForm && (
-                <form onSubmit={handleAddNote} className="mb-6 p-4 bg-gray-50 rounded-lg">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <input
-                      type="text"
-                      placeholder="Note title"
-                      value={newNote.title}
-                      onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                    <select
-                      value={newNote.category}
-                      onChange={(e) => setNewNote({ ...newNote, category: e.target.value })}
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="general">General</option>
-                      <option value="pros">Pros</option>
-                      <option value="cons">Cons</option>
-                      <option value="visit">Visit Notes</option>
-                      <option value="research">Research</option>
-                      <option value="comparison">Comparison</option>
-                    </select>
-                  </div>
-                  <textarea
-                    placeholder="Write your note here..."
-                    value={newNote.content}
-                    onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 h-24"
-                    required
-                  />
-                  <div className="flex justify-between items-center mt-4">
-                    <select
-                      value={newNote.priority}
-                      onChange={(e) => setNewNote({ ...newNote, priority: e.target.value })}
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="low">Low Priority</option>
-                      <option value="medium">Medium Priority</option>
-                      <option value="high">High Priority</option>
-                    </select>
+              </form>
+              {message && <div className="text-green-600 mb-2">{message}</div>}
+              <ul>
+                {notes.length === 0 && <li className="text-gray-500">No notes yet.</li>}
+                {notes.map((note) => (
+                  <li key={note._id} className="flex justify-between items-center border-b py-2">
+                    <div>
+                      <div>{note.content}</div>
+                      <div className="text-xs text-gray-400">{formatDate(note.createdAt)}</div>
+                    </div>
                     <button
-                      type="submit"
-                      className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                      onClick={() => handleDeleteNote(note._id)}
+                      className="text-red-500 hover:underline ml-4"
                     >
-                      Save Note
+                      Delete
                     </button>
-                  </div>
-                </form>
-              )}
+                  </li>
+                ))}
+              </ul>
+            </section>
 
-              {/* Notes List */}
-              {notes.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="text-gray-400 text-6xl mb-4">📝</div>
-                  <p className="text-gray-500 text-lg mb-2">No notes yet</p>
-                  <p className="text-gray-400 text-sm">
-                    Add your first note to keep track of your thoughts about this apartment.
-                  </p>
-                </div>
-              ) : filteredAndSortedNotes.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No notes match your current filters.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {filteredAndSortedNotes.map((note, index) => (
-                    <NoteCard
-                      key={note._id || `temp-${index}`}
-                      note={note}
-                      onEdit={handleEditNote}
-                      onDelete={handleDeleteNote}
-                      isEditing={editingNoteId === note._id}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Neighborhood Rating Section */}
+            <section className="bg-white rounded-lg shadow-md p-6 mt-6">
+              <h2 className="text-xl font-bold mb-4">Neighborhood Rating</h2>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="font-semibold">Average:</span>
+                {typeof neighborhoodRating.average === 'number' &&
+                !isNaN(neighborhoodRating.average) ? (
+                  <span className="flex items-center">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <span
+                        key={i}
+                        className={
+                          i <= Math.round(neighborhoodRating.average)
+                            ? 'text-yellow-400'
+                            : 'text-gray-300'
+                        }
+                      >
+                        ★
+                      </span>
+                    ))}
+                    <span className="ml-2 text-gray-600">
+                      {neighborhoodRating.average.toFixed(2)} / 5
+                    </span>
+                    <span className="ml-2 text-xs text-gray-500">
+                      ({neighborhoodRating.count} rating{neighborhoodRating.count !== 1 ? 's' : ''})
+                    </span>
+                  </span>
+                ) : (
+                  <span className="text-gray-500">No ratings yet</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">Your Rating:</span>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <button
+                    key={i}
+                    className={
+                      i <= (neighborhoodRating.userRating || 0)
+                        ? 'text-yellow-400 text-2xl'
+                        : 'text-gray-300 text-2xl'
+                    }
+                    onClick={() => handleSetRating(i)}
+                    disabled={ratingLoading}
+                    aria-label={`Rate ${i} star${i > 1 ? 's' : ''}`}
+                  >
+                    ★
+                  </button>
+                ))}
+                {neighborhoodRating.userRating && (
+                  <span className="ml-2 text-gray-600">{neighborhoodRating.userRating} / 5</span>
+                )}
+                {ratingLoading && <span className="ml-2 text-blue-500">Saving...</span>}
+              </div>
+            </section>
           </div>
 
           {/* Sidebar */}

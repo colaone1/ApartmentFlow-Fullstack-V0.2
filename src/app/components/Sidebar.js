@@ -1,22 +1,42 @@
 'use client';
 
 export default function Sidebar({ filters = {}, onFilterChange = () => {} }) {
-  const { minPrice = 0, maxPrice = 3000, bedrooms = 0, radius = 10 } = filters;
+  const { minPrice = null, maxPrice = null, bedrooms = null, radius = null } = filters;
 
   const handleChange = (field, value) => {
+    const numValue = parseInt(value);
+    // If the value is 0 and it's not bedrooms, treat it as "no limit"
+    const finalValue = numValue === 0 && field !== 'bedrooms' ? null : numValue;
+
     onFilterChange({
       ...filters,
-      [field]: parseInt(value),
+      [field]: finalValue,
     });
   };
 
   const resetFilters = () => {
     onFilterChange({
-      minPrice: 0,
-      maxPrice: 3000,
-      bedrooms: 0,
-      radius: 10,
+      minPrice: null,
+      maxPrice: null,
+      bedrooms: null,
+      radius: null,
     });
+  };
+
+  const formatPrice = (price) => {
+    if (price === null) return 'No limit';
+    if (price >= 5000) return '5000+';
+    return price.toString();
+  };
+
+  const formatBedrooms = (bedrooms) => {
+    if (bedrooms === null) return 'Any';
+    return `${bedrooms}+`;
+  };
+
+  const formatRadius = (radius) => {
+    if (radius === null) return 'No limit';
+    return `${radius} km`;
   };
 
   return (
@@ -26,14 +46,14 @@ export default function Sidebar({ filters = {}, onFilterChange = () => {} }) {
       {/* Min Price */}
       <div className="mb-4 md:mb-6">
         <label className="block font-semibold mb-2 text-sm md:text-base">
-          Min Price (£): {minPrice}
+          Min Price (£): {formatPrice(minPrice)}
         </label>
         <input
           type="range"
           min="0"
-          max="3000"
+          max="5000"
           step="50"
-          value={minPrice}
+          value={minPrice || 0}
           onChange={(e) => handleChange('minPrice', e.target.value)}
           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
         />
@@ -42,14 +62,14 @@ export default function Sidebar({ filters = {}, onFilterChange = () => {} }) {
       {/* Max Price */}
       <div className="mb-4 md:mb-6">
         <label className="block font-semibold mb-2 text-sm md:text-base">
-          Max Price (£): {maxPrice}
+          Max Price (£): {formatPrice(maxPrice)}
         </label>
         <input
           type="range"
           min="0"
           max="5000"
           step="50"
-          value={maxPrice}
+          value={maxPrice || 0}
           onChange={(e) => handleChange('maxPrice', e.target.value)}
           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
         />
@@ -58,14 +78,14 @@ export default function Sidebar({ filters = {}, onFilterChange = () => {} }) {
       {/* Bedrooms */}
       <div className="mb-4 md:mb-6">
         <label className="block font-semibold mb-2 text-sm md:text-base">
-          Bedrooms: {bedrooms}+
+          Bedrooms: {formatBedrooms(bedrooms)}
         </label>
         <input
           type="range"
           min="0"
           max="5"
           step="1"
-          value={bedrooms}
+          value={bedrooms || 0}
           onChange={(e) => handleChange('bedrooms', e.target.value)}
           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
         />
@@ -73,13 +93,15 @@ export default function Sidebar({ filters = {}, onFilterChange = () => {} }) {
 
       {/* Radius */}
       <div className="mb-4 md:mb-6">
-        <label className="block font-semibold mb-2 text-sm md:text-base">Radius: {radius} km</label>
+        <label className="block font-semibold mb-2 text-sm md:text-base">
+          Radius: {formatRadius(radius)}
+        </label>
         <input
           type="range"
           min="1"
           max="50"
           step="1"
-          value={radius}
+          value={radius || 1}
           onChange={(e) => handleChange('radius', e.target.value)}
           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
         />

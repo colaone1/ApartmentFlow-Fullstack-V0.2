@@ -118,9 +118,6 @@ describe('Apartment Features', () => {
         owner: testUser._id,
       });
 
-    if (response.status !== 201) {
-      console.log('DEBUG: Response body for failed creation:', response.body);
-    }
     expect(response.status).toBe(201);
     expect(response.body.title).toBe('Test Apartment');
   });

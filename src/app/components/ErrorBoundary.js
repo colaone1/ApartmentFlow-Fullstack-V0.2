@@ -34,12 +34,6 @@ class ErrorBoundary extends React.Component {
       });
     }
 
-    // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      // eslint-disable-next-line no-console
-      console.error('Error caught by boundary:', error, errorInfo);
-    }
-
     this.setState({
       hasError: true,
       errorInfo: errorInfo,

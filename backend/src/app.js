@@ -68,10 +68,8 @@ if (process.env.NODE_ENV !== 'test') {
       optimizeQueries();
       // AI-OPTIMIZED: Setup connection event handlers
       setupConnectionHandlers();
-      console.log('MongoDB connected with optimizations');
     })
     .catch((err) => {
-      console.error('MongoDB connection error:', err);
       process.exit(1);
     });
 }
@@ -258,6 +256,7 @@ const favoriteRoutes = require('./routes/favorite.routes');
 const commuteRoutes = require('./routes/commute.routes');
 const userRoutes = require('./routes/user.routes');
 const noteRoutes = require('./routes/note.routes');
+const neighborhoodRatingRoutes = require('./routes/neighborhoodRating.routes');
 
 /**
  * AI-OPTIMIZED: Route Configuration with Caching
@@ -276,6 +275,7 @@ app.use('/api/commute', commuteRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notes', noteRoutes);
+app.use('/api/ratings', neighborhoodRatingRoutes);
 
 /**
  * AI-OPTIMIZED: Static File Serving
@@ -375,7 +375,6 @@ app.use(function (req, res) {
 if (require.main === module) {
   const port = process.env.PORT || 5000;
   app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
     if (process.env.NODE_ENV !== 'test') {
       console.log(`Performance monitoring enabled`);
       console.log(`Cache system initialized`);

@@ -16,11 +16,10 @@ for (const envPath of possiblePaths) {
     dotenv.config({ path: envPath });
     if (process.env.CLOUDINARY_URL) {
       envLoaded = true;
-      console.log('Loaded .env from:', envPath);
       break;
     }
   } catch (error) {
-    console.log('Failed to load .env from:', envPath);
+    // Intentionally ignore errors loading .env files
   }
 }
 
@@ -42,14 +41,10 @@ if (
       api_key: apiKey,
       api_secret: apiSecret,
     });
-
-    console.log('Cloudinary configured successfully');
   } else {
-    console.warn('Invalid CLOUDINARY_URL format, using fallback configuration');
     setupFallbackConfig();
   }
 } else {
-  console.warn('CLOUDINARY_URL not found or using placeholder, using fallback configuration');
   setupFallbackConfig();
 }
 
@@ -63,7 +58,6 @@ function setupFallbackConfig() {
 
   // Override upload method to handle missing cloudinary in development
   cloudinary.uploader.upload = async function (file, options = {}) {
-    console.warn('Cloudinary not properly configured, returning mock upload result');
     return {
       public_id: 'mock_public_id',
       secure_url: 'https://via.placeholder.com/400x300?text=Mock+Image',

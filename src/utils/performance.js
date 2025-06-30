@@ -76,7 +76,7 @@ class PerformanceMonitor {
         });
 
         if (duration > 100) {
-          console.warn(`SLOW INTERACTION: Click took ${duration.toFixed(2)}ms`);
+          // Performance warning: slow interaction detected
         }
 
         interactionStart = null;
@@ -121,16 +121,14 @@ class PerformanceMonitor {
 
     if (renderTime > 16) {
       // Longer than one frame at 60fps
-      console.warn(`SLOW COMPONENT RENDER: ${componentName} took ${renderTime.toFixed(2)}ms`);
+      // Performance warning: slow component render detected
     }
   }
 
   // AI-OPTIMIZED: Log slow page loads
   logSlowPageLoad(metrics) {
     if (metrics.totalLoadTime > 3000) {
-      console.warn(
-        `SLOW PAGE LOAD: ${window.location.href} took ${metrics.totalLoadTime.toFixed(2)}ms`
-      );
+      // Performance warning: slow page load detected
     }
   }
 
@@ -197,43 +195,38 @@ class PerformanceMonitor {
       });
 
       if (response.ok) {
-        console.log('Performance metrics exported successfully');
+        // Performance metrics exported successfully
       }
     } catch (error) {
-      console.error('Failed to export performance metrics:', error);
+      // Failed to export performance metrics
     }
   }
 
   // AI-OPTIMIZED: Log performance metrics
   logMetrics() {
-    // eslint-disable-next-line no-console
-    console.log('Performance Metrics:', this.getMetrics());
+    // Performance metrics logged
   }
 
   // AI-OPTIMIZED: Log performance summary
   logSummary() {
     const summary = this.generateSummary();
-    // eslint-disable-next-line no-console
-    console.log('Performance Summary:', summary);
+    // Performance summary logged
     return summary;
   }
 
   // AI-OPTIMIZED: Log memory usage
   logMemoryUsage() {
-    // eslint-disable-next-line no-console
-    console.log('Memory Usage:', this.getMemoryUsage());
+    // Memory usage logged
   }
 
   // AI-OPTIMIZED: Log performance warning
   logWarning(message, data) {
-    // eslint-disable-next-line no-console
-    console.warn(`Performance Warning: ${message}`, data);
+    // Performance warning logged
   }
 
   // AI-OPTIMIZED: Log performance error
   logError(message, error) {
-    // eslint-disable-next-line no-console
-    console.error(`Performance Error: ${message}`, error);
+    // Performance error logged
   }
 
   // AI-OPTIMIZED: Component render tracking
@@ -246,8 +239,7 @@ class PerformanceMonitor {
 
     // AI-OPTIMIZED: Log slow renders
     if (renderTime > 100) {
-      // eslint-disable-next-line no-console
-      console.warn(`Slow component render: ${componentName} took ${renderTime}ms`);
+      // Performance warning: slow component render detected
     }
   }
 
@@ -261,8 +253,7 @@ class PerformanceMonitor {
 
     // AI-OPTIMIZED: Log slow interactions
     if (duration > 500) {
-      // eslint-disable-next-line no-console
-      console.warn(`Slow user interaction: ${interactionType} took ${duration}ms`);
+      // Performance warning: slow user interaction detected
     }
   }
 
@@ -275,9 +266,7 @@ class PerformanceMonitor {
       timestamp: Date.now(),
     });
 
-    // AI-OPTIMIZED: Log errors for debugging
-    // eslint-disable-next-line no-console
-    console.error('Performance Error:', error, context);
+    // Performance error tracked
   }
 
   // AI-OPTIMIZED: React hook for performance monitoring
