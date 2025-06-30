@@ -39,8 +39,6 @@ export default function Register() {
     }
 
     try {
-      // eslint-disable-next-line no-console
-      console.log('Registration attempt for:', formData.email);
       await register(formData.name, formData.email, formData.password);
       router.push('/listings');
     } catch (error) {

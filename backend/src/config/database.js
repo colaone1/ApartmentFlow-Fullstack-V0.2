@@ -36,15 +36,8 @@ const connectDB = async () => {
       zlibCompressionLevel: 6,
     });
 
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-
-    // Set global mongoose options for better performance
-    mongoose.set('debug', process.env.NODE_ENV === 'development');
-    mongoose.set('strictQuery', false);
-
     return conn;
   } catch (error) {
-    console.error('MongoDB connection error:', error);
     process.exit(1);
   }
 };
@@ -70,22 +63,15 @@ const optimizeQueries = () => {
 
 // Connection event handlers for better monitoring
 const setupConnectionHandlers = () => {
-  mongoose.connection.on('connected', () => {
-    console.log('Mongoose connected to MongoDB');
-  });
+  mongoose.connection.on('connected', () => {});
 
-  mongoose.connection.on('error', (err) => {
-    console.error('Mongoose connection error:', err);
-  });
+  mongoose.connection.on('error', (err) => {});
 
-  mongoose.connection.on('disconnected', () => {
-    console.log('Mongoose disconnected from MongoDB');
-  });
+  mongoose.connection.on('disconnected', () => {});
 
   // Graceful shutdown
   process.on('SIGINT', async () => {
     await mongoose.connection.close();
-    console.log('MongoDB connection closed through app termination');
     process.exit(0);
   });
 };

@@ -33,8 +33,6 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      // eslint-disable-next-line no-console
-      console.log('Login attempt for:', formData.email);
       await login(formData.email, formData.password);
       router.push('/listings');
     } catch (error) {

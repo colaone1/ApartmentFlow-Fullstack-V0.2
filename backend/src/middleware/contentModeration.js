@@ -66,7 +66,6 @@ const analyzeImageWithAI = async (imagePath) => {
   try {
     // Check rate limit
     if (!checkRateLimit()) {
-      console.warn('Content moderation API rate limit exceeded, skipping AI analysis');
       return {
         safe: true,
         confidence: 0.5,
@@ -145,8 +144,6 @@ const analyzeImageWithAI = async (imagePath) => {
       },
     };
   } catch (error) {
-    console.error('AI content analysis failed:', error.message);
-
     // AI-OPTIMIZED: Fallback to basic validation if AI analysis fails
     return {
       safe: true,
@@ -239,8 +236,6 @@ const contentModeration = async (req, res, next) => {
 
     // AI-OPTIMIZED: Process each uploaded file
     for (const file of req.files) {
-      console.log(`Moderating file: ${file.originalname}`);
-
       // Step 1: Basic metadata validation
       const metadataValidation = validateFileMetadata(file);
       if (!metadataValidation.valid) {
@@ -262,14 +257,6 @@ const contentModeration = async (req, res, next) => {
           type: 'ai_detection',
           confidence: aiAnalysis.confidence,
           details: aiAnalysis.details,
-        });
-
-        // AI-OPTIMIZED: Log inappropriate content for monitoring
-        console.warn(`Inappropriate content detected in ${file.originalname}:`, {
-          reason: aiAnalysis.reason,
-          confidence: aiAnalysis.confidence,
-          user: req.user?.id,
-          timestamp: new Date().toISOString(),
         });
       }
 
@@ -309,8 +296,6 @@ const contentModeration = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('Content moderation error:', error);
-
     // AI-OPTIMIZED: Fail safely - reject all files if moderation fails
     if (req.files) {
       for (const file of req.files) {
@@ -347,20 +332,11 @@ const reportInappropriateContent = async (req, res) => {
     // TODO: Implement report storage and admin notification
     // This would typically save to a reports collection and notify admins
 
-    console.log(`Content report submitted:`, {
-      imageId,
-      reason,
-      description,
-      reporterId,
-      timestamp: new Date().toISOString(),
-    });
-
     res.json({
       success: true,
       message: 'Report submitted successfully. Our team will review the content.',
     });
   } catch (error) {
-    console.error('Error submitting content report:', error);
     res.status(500).json({
       error: 'Failed to submit report',
       message: 'Please try again later',

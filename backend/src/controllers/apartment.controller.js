@@ -45,17 +45,28 @@ const getApartments = async (req, res) => {
     const query = buildApartmentQuery(req);
 
     // Add filter logic
-    if (req.query.minPrice) {
+    if (req.query.minPrice && req.query.minPrice !== 'null') {
       query.price = { ...query.price, $gte: Number(req.query.minPrice) };
     }
-    if (req.query.maxPrice) {
-      query.price = { ...query.price, $lte: Number(req.query.maxPrice) };
+    if (req.query.maxPrice && req.query.maxPrice !== 'null') {
+      const maxPrice = Number(req.query.maxPrice);
+      if (maxPrice >= 5000) {
+        // If maxPrice is 5000+, show all apartments >= 5000
+        query.price = { ...query.price, $gte: 5000 };
+      } else {
+        query.price = { ...query.price, $lte: maxPrice };
+      }
     }
-    if (req.query.bedrooms) {
+    if (req.query.bedrooms && req.query.bedrooms !== 'null') {
       query.bedrooms = { $gte: Number(req.query.bedrooms) };
     }
     // Optional: radius filter (requires coordinates)
-    if (req.query.radius && req.query.longitude && req.query.latitude) {
+    if (
+      req.query.radius &&
+      req.query.radius !== 'null' &&
+      req.query.longitude &&
+      req.query.latitude
+    ) {
       query['location.coordinates'] = {
         $geoWithin: {
           $centerSphere: [
@@ -98,7 +109,6 @@ const getApartments = async (req, res) => {
 
     return res.json(result);
   } catch (error) {
-    console.error('Error in getApartments:', error);
     return res.status(500).json({ message: 'Error fetching apartments', error: error.message });
   }
 };
@@ -255,7 +265,6 @@ const updateApartment = async (req, res) => {
     if (error.name === 'ValidationError') {
       return res.status(400).json({ error: 'Validation error', details: error.message });
     }
-    console.error('Error in updateApartment:', error);
     return res.status(500).json({ error: 'Error updating apartment', details: error.message });
   }
 };
@@ -400,7 +409,6 @@ const autofillListingFromUrl = async (req, res) => {
 
     res.json(cleanedData);
   } catch (error) {
-    console.error('Error autofilling listing:', error.message);
     if (error.response) {
       res.status(error.response.status).json({
         error: 'Failed to fetch listing data',
@@ -467,7 +475,6 @@ const uploadImages = async (req, res) => {
           height: result.height,
         });
       } catch (uploadError) {
-        console.error(`Error uploading file ${file.originalname}:`, uploadError);
         // Include the actual error message for testability
         uploadedImages.push({
           error: `Failed to upload ${file.originalname}: ${
@@ -495,7 +502,6 @@ const uploadImages = async (req, res) => {
       failedCount: uploadedImages.length - successfulUploads.length,
     });
   } catch (error) {
-    console.error('Error in uploadImages:', error);
     return res.status(500).json({
       error: 'Failed to upload images',
       details: error.message,
@@ -561,7 +567,6 @@ const calculateCommuteDistance = async (req, res) => {
               });
             })
             .catch((saveError) => {
-              console.error('Error saving apartment:', saveError);
               res.status(500).json({ error: 'Failed to save commute information' });
             });
         } else {
@@ -576,7 +581,6 @@ const calculateCommuteDistance = async (req, res) => {
     // Call the commute controller
     await commuteController.getCommuteTime(mockReq, mockRes);
   } catch (error) {
-    console.error('Error calculating commute distance:', error);
     res.status(500).json({
       error: 'Failed to calculate commute distance',
       details: error.message,

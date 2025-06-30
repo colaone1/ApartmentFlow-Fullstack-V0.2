@@ -42,13 +42,26 @@ export const AuthProvider = ({ children }) => {
       if (loggedIn) {
         try {
           const response = await apiClient.getProfile();
-          setUser(response.data);
+          const userObj = response.data || response;
+          if (!userObj?.name || !userObj?.email) {
+            setUser(null);
+            setIsLoggedIn(false);
+            apiClient.removeToken();
+            if (typeof window !== 'undefined') {
+              alert('Your session has expired or your profile is incomplete. Please log in again.');
+              window.location.href = '/auth/login';
+            }
+            return;
+          }
+          setUser(userObj);
         } catch (err) {
-          // eslint-disable-next-line no-console
-          console.error('Failed to fetch user profile:', err);
           setUser(null);
           setIsLoggedIn(false);
           apiClient.removeToken(); // Clear token on 401
+          if (typeof window !== 'undefined') {
+            alert('Your session has expired. Please log in again.');
+            window.location.href = '/auth/login';
+          }
         }
       }
       setLoading(false);

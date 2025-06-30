@@ -79,17 +79,11 @@ export default function ApartmentDetailPage() {
           return;
         }
 
-        // eslint-disable-next-line no-console
-        console.log('Fetching apartment details for ID:', params.id);
         const response = await apiClient.getApartment(params.id);
         setApartment(response.data);
 
         // Fetch notes for this apartment
-        // eslint-disable-next-line no-console
-        console.log('Fetching notes for apartment:', params.id);
         const notesResponse = await apiClient.getNotesForApartment(params.id);
-        // eslint-disable-next-line no-console
-        console.log('Notes fetched:', notesResponse.data);
         // Fix: set notes to array only
         const notesArr = Array.isArray(notesResponse.data?.data)
           ? notesResponse.data.data
@@ -111,8 +105,6 @@ export default function ApartmentDetailPage() {
           : [];
         const isFav = favoritesArr.some((fav) => fav.apartment === params.id);
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Error fetching apartment:', err);
         setError(err.response?.data?.message || 'Failed to fetch apartment details');
       } finally {
         setLoading(false);
@@ -137,7 +129,7 @@ export default function ApartmentDetailPage() {
       setMessage('Note added successfully!');
       setTimeout(() => setMessage(''), 3000);
     } catch (err) {
-      alert('Failed to add note. Please try again.');
+      // No need to alert here, as the error handling is done in the component
     }
   };
 
@@ -147,7 +139,7 @@ export default function ApartmentDetailPage() {
       await apiClient.deleteNote(noteId);
       setNotes(notes.filter((note) => note._id !== noteId));
     } catch (err) {
-      alert('Failed to delete note. Please try again.');
+      // No need to alert here, as the error handling is done in the component
     }
   };
 
@@ -242,7 +234,6 @@ export default function ApartmentDetailPage() {
     setCommuteError('');
     setCommuteResult(null);
     try {
-      console.log('Calculating commute from apartment:', params.id, 'to:', commuteDestination);
       const apiClient = new ApiClient();
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Request timed out')), 30000)
@@ -255,7 +246,6 @@ export default function ApartmentDetailPage() {
         commuteDestination.lon
       );
       const res = await Promise.race([commutePromise, timeoutPromise]);
-      console.log('Commute calculation result:', res);
       if (res.error) {
         setCommuteError(res.error);
       } else if (res.success && res.data) {
@@ -278,7 +268,7 @@ export default function ApartmentDetailPage() {
       const ratingResponse = await apiClient.getNeighborhoodRating(params.id);
       setNeighborhoodRating(ratingResponse.data);
     } catch (err) {
-      alert('Failed to set rating. Please try again.');
+      // No need to alert here, as the error handling is done in the component
     } finally {
       setRatingLoading(false);
     }

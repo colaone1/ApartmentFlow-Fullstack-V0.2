@@ -87,7 +87,6 @@ exports.getCommuteTime = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error getting commute time:', error.response?.data || error.message);
     res.status(500).json({
       error: 'Error getting commute time',
       details: error.response?.data || error.message,
@@ -119,7 +118,6 @@ exports.getMultipleCommuteTimes = async (req, res) => {
       data: commuteResults,
     });
   } catch (error) {
-    console.error('Error getting multiple commute times:', error);
     res.status(500).json({
       error: 'Error getting commute times',
       details: error.message,
@@ -138,7 +136,6 @@ exports.getPlaceDetails = async (req, res) => {
       data: placeDetails,
     });
   } catch (error) {
-    console.error('Error getting place details:', error);
     res.status(500).json({
       error: 'Error getting place details',
       details: error.message,
@@ -157,8 +154,6 @@ exports.getAddressSuggestions = async (req, res) => {
     if (!q) {
       return res.status(400).json({ error: 'Query parameter is required' });
     }
-
-    console.log('Searching for address:', q);
 
     // Create a custom HTTPS agent that's more lenient with SSL validation
     const httpsAgent = new https.Agent({
@@ -180,7 +175,6 @@ exports.getAddressSuggestions = async (req, res) => {
     });
 
     if (!Array.isArray(response.data)) {
-      console.error('Unexpected response from Nominatim:', response.data);
       return res.status(502).json({ error: 'Invalid response from address provider' });
     }
 
@@ -192,21 +186,16 @@ exports.getAddressSuggestions = async (req, res) => {
       lon: item.lon,
     }));
 
-    console.log('Mapped suggestions:', suggestions);
-
     res.json(suggestions);
   } catch (error) {
     if (error.response) {
       // Received a response from Nominatim but it was an error
-      console.error('Nominatim error:', error.response.status, error.response.data);
       res.status(502).json({ error: 'Address provider error', details: error.response.data });
     } else if (error.request) {
       // No response received
-      console.error('No response from Nominatim:', error.message);
       res.status(504).json({ error: 'No response from address provider', details: error.message });
     } else {
       // Other errors
-      console.error('Error fetching address suggestions:', error.message);
       res
         .status(500)
         .json({ error: 'Failed to fetch address suggestions', details: error.message });

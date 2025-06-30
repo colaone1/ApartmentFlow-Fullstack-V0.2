@@ -59,10 +59,10 @@ const login = async (req, res, next) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
         error: 'Invalid credentials',
-        details: errors.array().map((e) => e.msg) 
+        details: errors.array().map((e) => e.msg),
       });
     }
 
@@ -71,9 +71,9 @@ const login = async (req, res, next) => {
     // Check for user email
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        error: 'Invalid credentials' 
+        error: 'Invalid credentials',
       });
     }
 
@@ -81,9 +81,9 @@ const login = async (req, res, next) => {
     const isMatch = await user.comparePassword(password);
 
     if (!isMatch) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        error: 'Invalid credentials' 
+        error: 'Invalid credentials',
       });
     }
 
@@ -96,7 +96,6 @@ const login = async (req, res, next) => {
       token: generateToken(user._id),
     });
   } catch (error) {
-    console.error('Login error:', error);
     next(error);
   }
 };
