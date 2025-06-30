@@ -240,3 +240,15 @@ Positions you for the **highest possible grade**.
 
 - Test adding, editing, deleting, and filtering notes on listings.
 - Fix any issues found during testing.
+
+---
+
+## Lessons Learned & Troubleshooting
+
+### Key Bugs and Fixes
+
+- **Port Conflicts (`EADDRINUSE`)**: Use `taskkill /F /IM node.exe` to kill all Node.js servers, or use netstat/taskkill to free port 5000.
+- **MongoDB URI/.env Issues**: Ensure `.env` is in the backend directory, variable is named `MONGODB_URI`, and dotenv is loaded at the top of your entry file. Print the value to verify loading.
+- **Backend Crash Diagnosis**: Check for unbounded queries, port conflicts, and print environment variables to verify config. Always check logs for stack traces.
+- **Frontend 500/404 Errors**: Usually caused by backend not running or misconfigured. Check browser console/network tab and backend status.
+- **General Debugging**: Always restart servers after config changes. Use process managers or kill commands to avoid zombie processes.

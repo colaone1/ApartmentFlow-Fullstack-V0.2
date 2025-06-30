@@ -18,6 +18,7 @@
 14. [Quick Reference](#quick-reference)
 15. [Rate Limiting and Test Payload Validity](#rate-limiting-and-test-payload-validity)
 16. [Modern ESLint & Lint-Staged Troubleshooting (2024)](#modern-eslint-&-lint-staged-troubleshooting-2024)
+17. [Fullstack Troubleshooting Lessons (2025)](#fullstack-troubleshooting-lessons-2025)
 
 ---
 
@@ -1390,6 +1391,54 @@ npm test -- --testNamePattern="should create"
 **Tip:**
 
 - If you have both frontend and backend, check both for old lint-staged configs!
+
+---
+
+## Fullstack Troubleshooting Lessons (2025)
+
+## Common Bugs and Fixes from Real-World Debugging
+
+### 1. Port Conflicts (`EADDRINUSE`)
+
+- **Symptom:** Backend or frontend fails to start with `Error: listen EADDRINUSE: address already in use`.
+- **Fix:** Kill all Node.js servers with:
+  ```sh
+  taskkill /F /IM node.exe
+  ```
+  Or find and kill the specific PID using `netstat -ano | findstr :5000` and `taskkill /PID <PID> /F`.
+
+### 2. MongoDB URI and .env Issues
+
+- **Symptom:** Backend crashes with `MongooseError: The uri parameter to openUri() must be a string, got "undefined"`.
+- **Fix:**
+  - Ensure `.env` is in the correct directory (usually `backend/`).
+  - Variable must be named `MONGODB_URI` (no spaces).
+  - Use `require('dotenv').config();` at the top of your entry file.
+  - Print the value with `console.log('MONGODB_URI:', process.env.MONGODB_URI);` to verify loading.
+
+### 3. Backend Crash Diagnosis
+
+- **Symptom:** Backend starts, then crashes (sometimes with high memory usage logs).
+- **Fix:**
+  - Check for unbounded queries (use `.limit()` and pagination).
+  - Check for port conflicts (see above).
+  - Print environment variables to verify config.
+  - Check logs for stack traces.
+
+### 4. Frontend 500/404 Errors
+
+- **Symptom:** Frontend shows blank page, 500, or 404 errors.
+- **Fix:**
+  - Check backend is running and accessible.
+  - Check browser console and network tab for failed requests.
+  - Ensure you are using the correct port (Next.js may auto-increment ports if 3000 is busy).
+
+### 5. General Debugging Workflow
+
+- Always check both backend and frontend logs.
+- Use `console.log` to verify environment and config.
+- Restart servers after any config or .env change.
+- Use process managers or kill commands to avoid zombie processes.
 
 ---
 

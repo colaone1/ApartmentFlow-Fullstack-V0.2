@@ -252,3 +252,15 @@ Based on the comprehensive assessment:
 | Core Functionality | ✅ Working      | Working | A+           |
 
 **Overall Project Status: 98% Complete - A+ Grade Achievable** 🎯
+
+---
+
+## Debugging & Resilience
+
+This project demonstrated strong real-world debugging and resilience skills, including:
+
+- Quickly resolving port conflicts (`EADDRINUSE`) using process management commands.
+- Diagnosing and fixing MongoDB URI/.env issues and verifying environment variable loading.
+- Systematic backend crash diagnosis (memory, port, and config issues).
+- Debugging frontend 500/404 errors by tracing backend connectivity and configuration.
+- Using logs, environment variable printing, and process management to ensure robust fullstack operation.

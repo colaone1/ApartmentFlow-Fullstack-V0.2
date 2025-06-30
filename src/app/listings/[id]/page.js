@@ -8,6 +8,23 @@ import ApiClient from '@/utils/apiClient';
 import NoteCard from '../../components/NoteCard';
 // eslint-disable-next-line no-unused-vars
 import NotesFilter from '../../components/NotesFilter';
+import dynamic from 'next/dynamic';
+import 'leaflet/dist/leaflet.css';
+
+// Dynamic import for react-leaflet components (client-side only)
+const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), {
+  ssr: false,
+  loading: () => (
+    <div className="h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+      <p className="text-gray-500">Loading map...</p>
+    </div>
+  ),
+});
+const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), {
+  ssr: false,
+});
+const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
 
 export default function ApartmentDetailPage() {
   const params = useParams();
@@ -640,9 +657,38 @@ export default function ApartmentDetailPage() {
             {/* Location Map Placeholder */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Location</h3>
-              <div className="bg-gray-200 h-48 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">Map will be displayed here</p>
-              </div>
+              {location?.coordinates &&
+              Array.isArray(location.coordinates) &&
+              location.coordinates.length === 2 ? (
+                <div className="h-48 rounded-lg overflow-hidden">
+                  <MapContainer
+                    center={[location.coordinates[1], location.coordinates[0]]}
+                    zoom={15}
+                    scrollWheelZoom={true}
+                    zoomControl={true}
+                    minZoom={1}
+                    maxZoom={18}
+                    style={{ height: '100%', width: '100%' }}
+                    key={`map-${location.coordinates[0]}-${location.coordinates[1]}`}
+                  >
+                    <TileLayer
+                      attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <Marker position={[location.coordinates[1], location.coordinates[0]]}>
+                      <Popup>
+                        {title}
+                        <br />
+                        {address?.street}, {address?.city}
+                      </Popup>
+                    </Marker>
+                  </MapContainer>
+                </div>
+              ) : (
+                <div className="bg-gray-200 h-48 rounded-lg flex items-center justify-center">
+                  <p className="text-gray-500">Map not available</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
