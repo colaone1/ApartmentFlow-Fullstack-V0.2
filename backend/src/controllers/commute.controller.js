@@ -8,6 +8,9 @@ const mapsClient = new GoogleMapsClient(process.env.GOOGLE_MAPS_API_KEY);
 // IMPORTANT: Handles commute time and place details logic
 // TODO: Add caching for frequent commute queries
 
+/**
+ * Get commute time and distance using OpenRouteService and Nominatim
+ */
 exports.getCommuteTime = async (req, res) => {
   try {
     const { apartmentId, destination, mode = 'driving' } = req.body;
@@ -17,21 +20,91 @@ exports.getCommuteTime = async (req, res) => {
     if (!apartment) {
       return res.status(404).json({ error: 'Apartment not found' });
     }
+    const [originLng, originLat] = apartment.location.coordinates;
 
-    const origin = `${apartment.location.coordinates[1]},${apartment.location.coordinates[0]}`;
+    // Geocode destination using Nominatim
+    const nominatimRes = await axios.get('https://nominatim.openstreetmap.org/search', {
+      params: {
+        q: destination,
+        format: 'json',
+        limit: 1,
+      },
+      headers: {
+        'User-Agent': 'ApartmentSearch/1.0',
+      },
+    });
+    if (!nominatimRes.data || nominatimRes.data.length === 0) {
+      return res.status(404).json({ error: 'Destination address not found' });
+    }
+    const destLat = parseFloat(nominatimRes.data[0].lat);
+    const destLng = parseFloat(nominatimRes.data[0].lon);
 
-    // Get commute time
-    const commuteInfo = await mapsClient.getCommuteTime(origin, destination, mode);
+    // Map mode to ORS profile
+    const modeMap = {
+      driving: 'driving-car',
+      walking: 'foot-walking',
+      bicycling: 'cycling-regular',
+      transit: 'driving-car', // ORS does not support transit, fallback to driving
+    };
+    const profile = modeMap[mode] || 'driving-car';
+
+    // Call OpenRouteService Directions API
+    let orsRes;
+    try {
+      orsRes = await axios.post(
+        'https://api.openrouteservice.org/v2/directions/' + profile,
+        {
+          coordinates: [
+            [originLng, originLat],
+            [destLng, destLat],
+          ],
+        },
+        {
+          headers: {
+            Authorization: process.env.ORS_API_KEY,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    } catch (orsError) {
+      console.error('ORS API error:', orsError.response?.data || orsError.message);
+      return res
+        .status(502)
+        .json({
+          error: 'Routing provider error',
+          details: orsError.response?.data || orsError.message,
+        });
+    }
+
+    if (!orsRes.data || !orsRes.data.features || !orsRes.data.features[0]) {
+      return res.status(404).json({ error: 'No route found between origin and destination' });
+    }
+
+    const route = orsRes.data.features[0];
+    const summary = route.properties.summary;
+    const distanceKm = summary.distance / 1000;
+    const durationMin = summary.duration / 60;
 
     res.json({
       success: true,
-      data: commuteInfo,
+      data: {
+        distance: {
+          value: summary.distance,
+          text: `${distanceKm.toFixed(2)} km`,
+        },
+        duration: {
+          value: summary.duration,
+          text: `${durationMin.toFixed(1)} min`,
+        },
+        mode: profile,
+        destination: nominatimRes.data[0].display_name,
+      },
     });
   } catch (error) {
-    console.error('Error getting commute time:', error);
+    console.error('Error getting commute time:', error.response?.data || error.message);
     res.status(500).json({
       error: 'Error getting commute time',
-      details: error.message,
+      details: error.response?.data || error.message,
     });
   }
 };
@@ -94,12 +167,12 @@ exports.getPlaceDetails = async (req, res) => {
  */
 exports.getAddressSuggestions = async (req, res) => {
   try {
-    const { query } = req.query;
-    if (!query) {
+    const { q } = req.query;
+    if (!q) {
       return res.status(400).json({ error: 'Query parameter is required' });
     }
 
-    console.log('Searching for address:', query);
+    console.log('Searching for address:', q);
 
     // Create a custom HTTPS agent that's more lenient with SSL validation
     const httpsAgent = new https.Agent({
@@ -108,7 +181,7 @@ exports.getAddressSuggestions = async (req, res) => {
 
     const response = await axios.get('https://nominatim.openstreetmap.org/search', {
       params: {
-        q: query,
+        q: q,
         format: 'json',
         limit: 5,
         addressdetails: 1,

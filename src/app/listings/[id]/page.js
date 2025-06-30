@@ -305,7 +305,7 @@ export default function ApartmentDetailPage() {
   // Fetch address suggestions as user types
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (!commuteAddress || commuteAddress.length < 3) {
+      if (!commuteAddress || commuteAddress.trim().length < 3) {
         setCommuteSuggestions([]);
         return;
       }
