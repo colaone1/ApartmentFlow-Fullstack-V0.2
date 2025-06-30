@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 // eslint-disable-next-line no-unused-vars
 import Image from 'next/image';
@@ -8,6 +8,23 @@ import ApiClient from '@/utils/apiClient';
 import NoteCard from '../../components/NoteCard';
 // eslint-disable-next-line no-unused-vars
 import NotesFilter from '../../components/NotesFilter';
+import dynamic from 'next/dynamic';
+import 'leaflet/dist/leaflet.css';
+
+// Dynamic import for react-leaflet components (client-side only)
+const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), {
+  ssr: false,
+  loading: () => (
+    <div className="h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+      <p className="text-gray-500">Loading map...</p>
+    </div>
+  ),
+});
+const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), {
+  ssr: false,
+});
+const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
 
 export default function ApartmentDetailPage() {
   const params = useParams();
@@ -16,6 +33,7 @@ export default function ApartmentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageError, setImageError] = useState(false);
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState({
     title: '',
@@ -33,8 +51,32 @@ export default function ApartmentDetailPage() {
     sortBy: 'newest',
   });
   const [message, setMessage] = useState('');
+  const [commuteAddress, setCommuteAddress] = useState('');
+  const [commuteSuggestions, setCommuteSuggestions] = useState([]);
+  const [commuteLoading, setCommuteLoading] = useState(false);
+  const [commuteError, setCommuteError] = useState('');
+  const [commuteResult, setCommuteResult] = useState(null);
+  const [commuteDestination, setCommuteDestination] = useState({
+    address: '',
+    lat: null,
+    lon: null,
+  });
+  const commuteInputRef = useRef();
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+
+  const imageUrls = useMemo(() => {
+    if (!apartment || !apartment.images) return ['/default-image.png'];
+    return apartment.images.map((img) => {
+      if (!img.url || img.url.trim() === '') {
+        return '/default-image.png';
+      }
+      if (img.url.startsWith('http://') || img.url.startsWith('https://')) {
+        return img.url;
+      }
+      return `${backendUrl}/${img.url.replace(/\\/g, '/').replace(/^\//, '')}`;
+    });
+  }, [apartment, backendUrl]);
 
   useEffect(() => {
     const fetchApartmentDetails = async () => {
@@ -56,11 +98,22 @@ export default function ApartmentDetailPage() {
         const notesResponse = await apiClient.getNotes({ apartmentId: params.id });
         // eslint-disable-next-line no-console
         console.log('Notes fetched:', notesResponse.data);
-        setNotes(notesResponse.data || []);
+        // Fix: set notes to array only
+        const notesArr = Array.isArray(notesResponse.data?.data)
+          ? notesResponse.data.data
+          : Array.isArray(notesResponse.data)
+          ? notesResponse.data
+          : [];
+        setNotes(notesArr);
 
         // Check if apartment is in user's favorites
         const favoritesResponse = await apiClient.getFavorites();
-        const isFav = favoritesResponse.data?.some((fav) => fav.apartment === params.id);
+        const favoritesArr = Array.isArray(favoritesResponse.data?.data)
+          ? favoritesResponse.data.data
+          : Array.isArray(favoritesResponse.data)
+          ? favoritesResponse.data
+          : [];
+        const isFav = favoritesArr.some((fav) => fav.apartment === params.id);
         setIsFavorite(isFav);
       } catch (err) {
         // eslint-disable-next-line no-console
@@ -79,18 +132,26 @@ export default function ApartmentDetailPage() {
   const handleAddNote = async (e) => {
     e.preventDefault();
     try {
-      // eslint-disable-next-line no-console
-      console.log('Adding note:', newNote);
       const apiClient = new ApiClient();
-      const response = await apiClient.createNote({
+      await apiClient.createNote({
         apartmentId: params.id,
         ...newNote,
       });
 
-      setNotes([...notes, response.data]);
+      // Re-fetch notes after adding
+      const notesResponse = await apiClient.getNotes({ apartmentId: params.id });
+      const notesArr = Array.isArray(notesResponse.data?.data)
+        ? notesResponse.data.data
+        : Array.isArray(notesResponse.data)
+        ? notesResponse.data
+        : [];
+      setNotes(notesArr);
+
       setNewNote({ title: '', content: '', category: 'general', priority: 'medium' });
       setShowNoteForm(false);
       setMessage('Note added successfully!');
+
+      setTimeout(() => setMessage(''), 3000);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Error adding note:', err);
@@ -108,8 +169,13 @@ export default function ApartmentDetailPage() {
       const apiClient = new ApiClient();
       const response = await apiClient.updateNote(noteId, updatedNote);
 
+      // Update the notes array with the updated note
       setNotes(notes.map((note) => (note._id === noteId ? response.data : note)));
       setEditingNoteId(null);
+      setMessage('Note updated successfully!');
+
+      // Clear message after 3 seconds
+      setTimeout(() => setMessage(''), 3000);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Failed to update note:', err);
@@ -143,6 +209,24 @@ export default function ApartmentDetailPage() {
       // eslint-disable-next-line no-console
       console.error('Failed to toggle favorite:', err);
     }
+  };
+
+  const handleImageNavigation = (direction) => {
+    if (imageUrls.length <= 1) return;
+
+    if (direction === 'next') {
+      setCurrentImageIndex((prev) => (prev === imageUrls.length - 1 ? 0 : prev + 1));
+    } else if (direction === 'prev') {
+      setCurrentImageIndex((prev) => (prev === 0 ? imageUrls.length - 1 : prev - 1));
+    }
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  const handleImageLoad = () => {
+    setImageError(false);
   };
 
   const formatAmenities = (amenities) => {
@@ -197,6 +281,100 @@ export default function ApartmentDetailPage() {
       }
     });
 
+  // Debug logging
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('Notes state:', notes);
+    // eslint-disable-next-line no-console
+    console.log('Notes filter:', notesFilter);
+    // eslint-disable-next-line no-console
+    console.log('Filtered notes:', filteredAndSortedNotes);
+  }, [notes, notesFilter, filteredAndSortedNotes]);
+
+  // Keyboard navigation for image slideshow
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (imageUrls.length <= 1) return;
+
+      if (e.key === 'ArrowLeft') {
+        handleImageNavigation('prev');
+      } else if (e.key === 'ArrowRight') {
+        handleImageNavigation('next');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [imageUrls.length]);
+
+  // Fetch address suggestions as user types
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (!commuteAddress || commuteAddress.trim().length < 3) {
+        setCommuteSuggestions([]);
+        return;
+      }
+      try {
+        const apiClient = new ApiClient();
+        const res = await apiClient.getAddressSuggestions(commuteAddress);
+        setCommuteSuggestions(res.data || []);
+      } catch (err) {
+        setCommuteSuggestions([]);
+      }
+    };
+    const timeout = setTimeout(fetchSuggestions, 400);
+    return () => clearTimeout(timeout);
+  }, [commuteAddress]);
+
+  // Handle selecting a suggestion
+  const handleSuggestionClick = (suggestion) => {
+    setCommuteAddress(suggestion.address);
+    setCommuteDestination({
+      address: suggestion.address,
+      lat: suggestion.lat,
+      lon: suggestion.lon,
+    });
+    setCommuteSuggestions([]);
+    if (commuteInputRef.current) {
+      commuteInputRef.current.value = suggestion.address;
+    }
+  };
+
+  // Handle commute calculation
+  const handleCommuteSubmit = async (e) => {
+    e.preventDefault();
+    setCommuteLoading(true);
+    setCommuteError('');
+    setCommuteResult(null);
+    try {
+      console.log('Calculating commute from apartment:', params.id, 'to:', commuteDestination);
+      const apiClient = new ApiClient();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out')), 30000)
+      );
+      // Send lat/lon if available, otherwise fallback to address string
+      const commutePromise = apiClient.getCommuteTime(
+        params.id,
+        commuteDestination.address,
+        commuteDestination.lat,
+        commuteDestination.lon
+      );
+      const res = await Promise.race([commutePromise, timeoutPromise]);
+      console.log('Commute calculation result:', res);
+      if (res.error) {
+        setCommuteError(res.error);
+      } else if (res.success && res.data) {
+        setCommuteResult(res.data);
+      } else {
+        setCommuteError('Unknown error calculating commute');
+      }
+    } catch (err) {
+      setCommuteError(err.message || 'Failed to calculate commute');
+    } finally {
+      setCommuteLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -237,24 +415,9 @@ export default function ApartmentDetailPage() {
     );
   }
 
-  const {
-    title,
-    description,
-    price,
-    location,
-    bedrooms,
-    bathrooms,
-    area,
-    amenities,
-    images,
-    status,
-  } = apartment;
+  const { title, description, price, location, bedrooms, bathrooms, area, amenities, status } =
+    apartment;
   const { address } = location || {};
-  const imageUrls = images?.map((img) =>
-    img.url && img.url.trim() !== ''
-      ? `${backendUrl}/${img.url.replace(/\\/g, '/').replace(/^\//, '')}`
-      : '/default-image.png'
-  ) || ['/default-image.png'];
   const displayAmenities = formatAmenities(amenities);
 
   return (
@@ -297,32 +460,39 @@ export default function ApartmentDetailPage() {
             {/* Image Gallery */}
             <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
               <div className="relative h-96">
-                <Image
-                  src={imageUrls[currentImageIndex]}
-                  alt={`${title} - Image ${currentImageIndex + 1}`}
-                  fill
-                  style={{ objectFit: 'cover' }}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
-                />
+                {imageError ? (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center rounded-lg">
+                    <div className="text-center">
+                      <div className="text-6xl mb-2">📷</div>
+                      <p className="text-gray-500">Image not available</p>
+                    </div>
+                  </div>
+                ) : (
+                  <Image
+                    src={imageUrls[currentImageIndex]}
+                    alt={title}
+                    fill
+                    style={{ objectFit: 'cover' }}
+                    className="rounded-lg shadow-md"
+                    priority
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
+                    onError={handleImageError}
+                    onLoad={handleImageLoad}
+                  />
+                )}
                 {imageUrls.length > 1 && (
                   <>
                     <button
-                      onClick={() =>
-                        setCurrentImageIndex((prev) =>
-                          prev === 0 ? imageUrls.length - 1 : prev - 1
-                        )
-                      }
-                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70"
+                      onClick={() => handleImageNavigation('prev')}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all duration-200 hover:scale-110"
+                      aria-label="Previous image"
                     >
                       ←
                     </button>
                     <button
-                      onClick={() =>
-                        setCurrentImageIndex((prev) =>
-                          prev === imageUrls.length - 1 ? 0 : prev + 1
-                        )
-                      }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70"
+                      onClick={() => handleImageNavigation('next')}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all duration-200 hover:scale-110"
+                      aria-label="Next image"
                     >
                       →
                     </button>
@@ -340,9 +510,12 @@ export default function ApartmentDetailPage() {
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                        index === currentImageIndex ? 'border-blue-500' : 'border-gray-200'
+                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${
+                        index === currentImageIndex
+                          ? 'border-blue-500 shadow-lg'
+                          : 'border-gray-200 hover:border-blue-300'
                       }`}
+                      aria-label={`View image ${index + 1}`}
                     >
                       <Image
                         src={url}
@@ -421,6 +594,19 @@ export default function ApartmentDetailPage() {
                 </button>
               </div>
 
+              {/* Success Message */}
+              {message && (
+                <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+                  {message}
+                  <button
+                    onClick={() => setMessage('')}
+                    className="float-right font-bold text-green-700 hover:text-green-900"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+
               {/* Notes Filter */}
               {notes.length > 0 && (
                 <NotesFilter filters={notesFilter} onFilterChange={setNotesFilter} />
@@ -493,9 +679,9 @@ export default function ApartmentDetailPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {filteredAndSortedNotes.map((note) => (
+                  {filteredAndSortedNotes.map((note, index) => (
                     <NoteCard
-                      key={note._id}
+                      key={note._id || `temp-${index}`}
                       note={note}
                       onEdit={handleEditNote}
                       onDelete={handleDeleteNote}
@@ -548,10 +734,153 @@ export default function ApartmentDetailPage() {
             </div>
 
             {/* Location Map Placeholder */}
-            <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Location</h3>
-              <div className="bg-gray-200 h-48 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">Map will be displayed here</p>
+              {location?.coordinates &&
+              Array.isArray(location.coordinates) &&
+              location.coordinates.length === 2 ? (
+                <div className="h-48 rounded-lg overflow-hidden mb-4">
+                  <MapContainer
+                    center={[location.coordinates[1], location.coordinates[0]]}
+                    zoom={15}
+                    scrollWheelZoom={true}
+                    zoomControl={true}
+                    minZoom={1}
+                    maxZoom={18}
+                    style={{ height: '100%', width: '100%' }}
+                    key={`map-${location.coordinates[0]}-${location.coordinates[1]}`}
+                  >
+                    <TileLayer
+                      attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <Marker position={[location.coordinates[1], location.coordinates[0]]}>
+                      <Popup>
+                        {title}
+                        <br />
+                        {address?.street}, {address?.city}
+                      </Popup>
+                    </Marker>
+                  </MapContainer>
+                </div>
+              ) : (
+                <div className="bg-gray-200 h-48 rounded-lg flex items-center justify-center mb-4">
+                  <p className="text-gray-500">Map not available</p>
+                </div>
+              )}
+              {/* Commute Feature */}
+              <div className="mt-2">
+                <h4 className="font-semibold text-gray-800 mb-2">Commute to...</h4>
+                <form onSubmit={handleCommuteSubmit} className="mb-2">
+                  <input
+                    ref={commuteInputRef}
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter address (e.g. work, school)"
+                    value={commuteAddress}
+                    onChange={(e) => {
+                      setCommuteAddress(e.target.value);
+                      setCommuteError('');
+                      setCommuteResult(null);
+                    }}
+                    autoComplete="off"
+                  />
+                  {commuteSuggestions.length > 0 && (
+                    <ul className="bg-white border border-gray-200 rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10 absolute w-72">
+                      {commuteSuggestions.map((s) => (
+                        <li
+                          key={s.placeId}
+                          className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
+                          onClick={() => handleSuggestionClick(s)}
+                        >
+                          {s.address}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <button
+                    type="submit"
+                    className="w-full mt-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    disabled={commuteLoading || !commuteAddress}
+                  >
+                    {commuteLoading ? 'Calculating...' : 'Calculate Commute'}
+                  </button>
+                </form>
+                {commuteError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-2">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <svg
+                          className="h-5 w-5 text-red-400"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-red-800">
+                          Commute calculation failed
+                        </h3>
+                        <div className="mt-1 text-sm text-red-700">{commuteError}</div>
+                        <div className="mt-2 text-xs text-red-600">
+                          Try entering a different address or check if the apartment has a valid
+                          location.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {commuteResult && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-2">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <svg
+                          className="h-5 w-5 text-green-400"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-green-800">
+                          Commute calculated successfully
+                        </h3>
+                        <div className="mt-2 space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-green-700">Distance:</span>
+                            <span className="font-medium text-green-800">
+                              {commuteResult.distance?.text || commuteResult.distance || 'N/A'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-green-700">Duration:</span>
+                            <span className="font-medium text-green-800">
+                              {commuteResult.duration?.text || commuteResult.duration || 'N/A'}
+                            </span>
+                          </div>
+                          {commuteResult.mode && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-green-700">Mode:</span>
+                              <span className="font-medium text-green-800 capitalize">
+                                {commuteResult.mode}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

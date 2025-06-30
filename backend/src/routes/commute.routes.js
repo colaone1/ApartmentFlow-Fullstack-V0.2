@@ -5,12 +5,6 @@ const commuteController = require('../controllers/commute.controller');
 // GET /api/commute/suggestions
 router.get('/suggestions', commuteController.getAddressSuggestions);
 
-// GET /api/commute/:apartmentId
-router.get('/:apartmentId', function (req, res, next) {
-  // TODO: Get commute times for apartment
-  res.status(501).json({ error: 'Not implemented yet' });
-});
-
 // POST /api/commute
 router.post('/', commuteController.getCommuteTime);
 
@@ -19,5 +13,11 @@ router.post('/multiple', commuteController.getMultipleCommuteTimes);
 
 // GET /api/commute/place/:placeId
 router.get('/place/:placeId', commuteController.getPlaceDetails);
+
+// GET /api/commute/:apartmentId (keep this last to avoid catching other routes)
+router.get('/:apartmentId', function (req, res, next) {
+  // TODO: Get commute times for apartment
+  res.status(501).json({ error: 'Not implemented yet' });
+});
 
 module.exports = router;

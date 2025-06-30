@@ -23,10 +23,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const apiClient = new ApiClient(getAuthToken, clearAuthToken);
+  // Create ApiClient only on client side
+  const [apiClient, setApiClient] = useState(null);
+
+  useEffect(() => {
+    // Only create ApiClient on client side
+    if (typeof window !== 'undefined') {
+      setApiClient(new ApiClient(getAuthToken, clearAuthToken));
+    }
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
+      if (!apiClient) return;
+
       const loggedIn = apiClient.isLoggedIn();
       setIsLoggedIn(loggedIn);
       if (loggedIn) {
@@ -38,39 +48,63 @@ export const AuthProvider = ({ children }) => {
           console.error('Failed to fetch user profile:', err);
           setUser(null);
           setIsLoggedIn(false);
+          apiClient.removeToken(); // Clear token on 401
         }
       }
       setLoading(false);
     };
-    checkAuth();
-  }, []);
+
+    if (apiClient) {
+      checkAuth();
+    }
+
+    // Listen for token changes in other tabs
+    const handleStorageChange = (event) => {
+      if (event.key === 'authToken') {
+        window.location.reload();
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorageChange);
+      return () => window.removeEventListener('storage', handleStorageChange);
+    }
+  }, [apiClient]);
+
   const register = async (name, email, password) => {
+    if (!apiClient) throw new Error('ApiClient not initialized');
     const response = await apiClient.register(name, email, password);
     setIsLoggedIn(true);
     const userRes = await apiClient.getProfile();
     setUser(userRes.data);
     return response;
   };
+
   const login = async (email, password) => {
+    if (!apiClient) throw new Error('ApiClient not initialized');
     const response = await apiClient.login(email, password);
     setIsLoggedIn(true);
     const userRes = await apiClient.getProfile();
     setUser(userRes.data);
     return response;
   };
+
   const logout = async () => {
     try {
-      // eslint-disable-next-line no-console
-      console.log('Logging out user');
-      setUser(null);
-      setIsLoggedIn(false);
-      apiClient.removeToken();
+      if (apiClient) {
+        // console.log('Logging out user'); // Commented out for ESLint
+        setUser(null);
+        setIsLoggedIn(false);
+        apiClient.removeToken();
+      }
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error during logout:', error);
     }
   };
+
   const deleteAccount = async () => {
+    if (!apiClient) throw new Error('ApiClient not initialized');
     try {
       await apiClient.removeProfile();
       setIsLoggedIn(false);
@@ -89,4 +123,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
 export const useAuth = () => useContext(AuthContext);

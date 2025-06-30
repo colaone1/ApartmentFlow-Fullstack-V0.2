@@ -1,15 +1,21 @@
 'use client';
+// eslint-disable-next-line no-unused-vars
 import Image from 'next/image';
-import { useState } from 'react';
-import React from 'react';
+import { useState, useEffect } from 'react';
 // eslint-disable-next-line no-unused-vars
+import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
-// eslint-disable-next-line no-unused-vars
 import FavoriteButton from './FavoriteButton';
+import ApiClient from '@/utils/apiClient';
 
-const ListingCard = ({ apartment, priority = false }) => {
+const ListingCard = ({ apartment, priority = false, isFavorited = false, onToggleFavorite }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const auth = (useAuth && useAuth()) || {};
+  // eslint-disable-next-line no-unused-vars
+  const { user, isLoggedIn } = auth;
+  const apiClient = new ApiClient();
+  const [internalFavorited, setInternalFavorited] = useState(isFavorited);
 
   const {
     title = 'Untitled',
@@ -87,7 +93,7 @@ const ListingCard = ({ apartment, priority = false }) => {
   const closeModal = () => setModalOpen(false);
 
   // Keyboard close
-  React.useEffect(() => {
+  useEffect(() => {
     if (!modalOpen) return;
     const handleKey = (e) => {
       if (e.key === 'Escape') closeModal();
@@ -98,33 +104,113 @@ const ListingCard = ({ apartment, priority = false }) => {
 
   const displayAmenities = formatAmenities(amenities);
 
+  // Update internal state when prop changes
+  useEffect(() => {
+    setInternalFavorited(isFavorited);
+  }, [isFavorited]);
+
+  const handleFavoriteClick = async (apartmentId) => {
+    if (!isLoggedIn) return;
+    try {
+      if (internalFavorited) {
+        await apiClient.removeFavorite(apartmentId);
+        setInternalFavorited(false);
+        if (typeof onToggleFavorite === 'function') onToggleFavorite(apartmentId);
+      } else {
+        await apiClient.addFavorite(apartmentId);
+        setInternalFavorited(true);
+        if (typeof onToggleFavorite === 'function') onToggleFavorite(apartmentId);
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Error toggling favorite:', err);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-      <div
-        className="relative w-full h-48 cursor-pointer"
-        onClick={() => {
-          if (allImageUrls.length > 0) {
-            setModalOpen(true);
-            setCurrentIndex(0);
-          }
-        }}
-      >
-        <Image
-          src={imageUrl}
-          alt={`Image of ${title}`}
-          fill
-          style={{ objectFit: 'cover' }}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          priority={priority}
+    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 relative h-full flex flex-col">
+      {/* Favorite button in top-right */}
+      <div className="absolute top-2 right-2 z-10">
+        <FavoriteButton
+          apartmentId={apartment._id}
+          isInitiallyFavorited={internalFavorited}
+          onClick={handleFavoriteClick}
         />
-        {allImageUrls.length > 1 && (
-          <span className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
-            {allImageUrls.length} photos
-          </span>
-        )}
-        {/* Status badge overlay */}
-        <div className="absolute top-2 left-2">{getStatusBadge(status)}</div>
       </div>
+      {/* Make the main card clickable except for the modal and heart */}
+      <Link
+        href={`/listings/${apartment._id}`}
+        className="block group"
+        tabIndex={-1}
+        prefetch={false}
+      >
+        <div
+          className="relative w-full h-48 cursor-pointer group-hover:opacity-90"
+          onClick={(e) => e.preventDefault()} // Prevent modal on card click
+        >
+          <Image
+            src={imageUrl}
+            alt={`Image of ${title}`}
+            fill
+            style={{ objectFit: 'cover' }}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            priority={priority}
+          />
+          {allImageUrls.length > 1 && (
+            <span className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+              {allImageUrls.length} photos
+            </span>
+          )}
+          {/* Status badge overlay */}
+          <div className="absolute top-2 left-2">{getStatusBadge(status)}</div>
+        </div>
+        <div className="p-4">
+          <h3 className="text-xl font-semibold text-gray-800 mb-1">{title}</h3>
+          <p className="text-gray-600 text-sm mb-2">
+            {address.street}, {address.city}, {address.country}
+          </p>
+          <p className="text-lg font-bold text-blue-600 mb-3">£{price.toLocaleString()}</p>
+          {/* Property details */}
+          <div className="flex justify-between text-sm text-gray-600 mb-3">
+            <span className="flex items-center">
+              <span className="font-medium">{bedrooms}</span> Beds
+            </span>
+            <span className="flex items-center">
+              <span className="font-medium">{bathrooms}</span> Baths
+            </span>
+            <span className="flex items-center">
+              <span className="font-medium">{area}</span> sqft
+            </span>
+          </div>
+          {/* Amenities */}
+          {displayAmenities.length > 0 && (
+            <div className="mb-3">
+              <p className="text-xs text-gray-500 font-medium mb-1">Amenities:</p>
+              <div className="flex flex-wrap gap-1">
+                {displayAmenities.map((amenity, index) => (
+                  <span
+                    key={index}
+                    className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full"
+                  >
+                    {amenity}
+                  </span>
+                ))}
+                {formatAmenities(amenities).length > 3 && (
+                  <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-500 rounded-full">
+                    +{formatAmenities(amenities).length - 3} more
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+          {/* Description preview */}
+          {description && (
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {description.length > 100 ? `${description.substring(0, 100)}...` : description}
+            </p>
+          )}
+        </div>
+      </Link>
       {/* Modal Gallery */}
       {modalOpen && (
         <div
@@ -170,55 +256,6 @@ const ListingCard = ({ apartment, priority = false }) => {
           </div>
         </div>
       )}
-      <div className="p-4">
-        <h3 className="text-xl font-semibold text-gray-800 mb-1">{title}</h3>
-        <p className="text-gray-600 text-sm mb-2">
-          {address.street}, {address.city}, {address.country}
-        </p>
-        <p className="text-lg font-bold text-blue-600 mb-3">£{price.toLocaleString()}</p>
-
-        {/* Property details */}
-        <div className="flex justify-between text-sm text-gray-600 mb-3">
-          <span className="flex items-center">
-            <span className="font-medium">{bedrooms}</span> Beds
-          </span>
-          <span className="flex items-center">
-            <span className="font-medium">{bathrooms}</span> Baths
-          </span>
-          <span className="flex items-center">
-            <span className="font-medium">{area}</span> sqft
-          </span>
-        </div>
-
-        {/* Amenities */}
-        {displayAmenities.length > 0 && (
-          <div className="mb-3">
-            <p className="text-xs text-gray-500 font-medium mb-1">Amenities:</p>
-            <div className="flex flex-wrap gap-1">
-              {displayAmenities.map((amenity, index) => (
-                <span
-                  key={index}
-                  className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full"
-                >
-                  {amenity}
-                </span>
-              ))}
-              {formatAmenities(amenities).length > 3 && (
-                <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-500 rounded-full">
-                  +{formatAmenities(amenities).length - 3} more
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Description preview */}
-        {description && (
-          <p className="text-sm text-gray-600 line-clamp-2">
-            {description.length > 100 ? `${description.substring(0, 100)}...` : description}
-          </p>
-        )}
-      </div>
     </div>
   );
 };

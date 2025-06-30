@@ -17,6 +17,8 @@
 13. [Build Process Issues](#build-process-issues)
 14. [Quick Reference](#quick-reference)
 15. [Rate Limiting and Test Payload Validity](#rate-limiting-and-test-payload-validity)
+16. [Modern ESLint & Lint-Staged Troubleshooting (2024)](#modern-eslint-&-lint-staged-troubleshooting-2024)
+17. [Fullstack Troubleshooting Lessons (2025)](#fullstack-troubleshooting-lessons-2025)
 
 ---
 
@@ -1350,5 +1352,122 @@ npm test -- --testNamePattern="should create"
 
 ---
 
+## Modern ESLint & Lint-Staged Troubleshooting (2024)
+
+### Issue: Pre-commit hook fails with 'Invalid option --ignore-path' or '.eslintignore is no longer supported'
+
+**Symptoms:**
+
+- Commit is blocked by Husky/lint-staged with errors about deprecated ESLint flags or .eslintignore.
+- Error: `Invalid option '--ignore-path' - perhaps you meant '--ignore-pattern'?`
+- Error: `The ".eslintignore" file is no longer supported. Switch to using the "ignores" property in "eslint.config.js".`
+
+**Fix:**
+
+1. Move ignore patterns from `.eslintignore` to the `ignores` property in `eslint.config.js`.
+2. Remove any `--ignore-path` or `.eslintignore` references from all lint-staged configs (check both frontend and backend `package.json`).
+3. Use only `eslint --fix` and `prettier --write` in lint-staged for JS/TS files.
+
+**Example lint-staged config:**
+
+```json
+"lint-staged": {
+  "src/**/*.{js,jsx,ts,tsx}": [
+    "eslint --fix",
+    "prettier --write"
+  ],
+  "*.{js,jsx,ts,tsx,json,css,md}": [
+    "prettier --write"
+  ]
+}
+```
+
+**Why:**
+
+- Modern ESLint (v9+) and Next.js no longer support `.eslintignore` or the `--ignore-path` flag.
+- All ignores must be in `eslint.config.js`.
+- Lint-staged must not use deprecated flags or it will block commits.
+
+**Tip:**
+
+- If you have both frontend and backend, check both for old lint-staged configs!
+
+---
+
 _Last Updated: December 2024_
 _Part of the Apartment Search Project Troubleshooting Suite_
+
+---
+
+## Upcoming Features & Testing Focus (Next Session)
+
+- **Private Listings Visibility:** Implement a toggle/filter or 'My Listings' page for users to view their private listings. Ensure backend API supports this.
+- **Commute Feature:** Add commute calculation (distance/time from listing to entered address) on apartment details pages.
+- **Notes Feature:** Retest and polish notes functionality (add, edit, delete, filter) and fix any issues found.
+
+# Fullstack Troubleshooting Lessons (2025)
+
+## Common Bugs and Fixes from Real-World Debugging
+
+### 1. Port Conflicts (`EADDRINUSE`)
+
+- **Symptom:** Backend or frontend fails to start with `Error: listen EADDRINUSE: address already in use`.
+- **Fix:** Kill all Node.js servers with:
+  ```sh
+  taskkill /F /IM node.exe
+  ```
+  Or find and kill the specific PID using `netstat -ano | findstr :5000` and `taskkill /PID <PID> /F`.
+
+### 2. MongoDB URI and .env Issues
+
+- **Symptom:** Backend crashes with `MongooseError: The uri parameter to openUri() must be a string, got "undefined"`.
+- **Fix:**
+  - Ensure `.env` is in the correct directory (usually `backend/`).
+  - Variable must be named `MONGODB_URI` (no spaces).
+  - Use `require('dotenv').config();` at the top of your entry file.
+  - Print the value with `console.log('MONGODB_URI:', process.env.MONGODB_URI);` to verify loading.
+
+### 3. Backend Crash Diagnosis
+
+- **Symptom:** Backend starts, then crashes (sometimes with high memory usage logs).
+- **Fix:**
+  - Check for unbounded queries (use `.limit()` and pagination).
+  - Check for port conflicts (see above).
+  - Print environment variables to verify config.
+  - Check logs for stack traces.
+
+### 4. Frontend 500/404 Errors
+
+- **Symptom:** Frontend shows blank page, 500, or 404 errors.
+- **Fix:**
+  - Check backend is running and accessible.
+  - Check browser console and network tab for failed requests.
+  - Ensure you are using the correct port (Next.js may auto-increment ports if 3000 is busy).
+
+### 5. General Debugging Workflow
+
+- Always check both backend and frontend logs.
+- Use `console.log` to verify environment and config.
+- Restart servers after any config or .env change.
+- Use process managers or kill commands to avoid zombie processes.
+
+## Commute Calculation Issues and Solutions
+
+### Problem
+
+- **OpenRouteService (ORS) API** was unreliable for short/local routes, often returning "No route found between origin and destination" even for valid addresses.
+- **Google Maps Directions API** required a credit card for API key access, which was not desirable for this project.
+- **Mapbox Directions API** sometimes required a card for new accounts, depending on region/account type.
+
+### Solution
+
+- Switched backend commute calculation to use **HERE Routing API** (https://developer.here.com/), which offers a generous free tier and does not require a card for API key access.
+- Updated backend code to use HERE for both geocoding and routing, ensuring reliable commute time/distance calculations for all valid addresses.
+- Removed ORS API key and code from the project for clarity and security.
+
+#### Implementation Summary
+
+- Added HERE API key to `.env` as `HERE_API_KEY`.
+- Updated `backend/src/controllers/commute.controller.js` to use HERE Geocoding and Routing APIs.
+- Installed `axios` in the backend for HTTP requests.
+- Verified with backend tests and real-world addresses.

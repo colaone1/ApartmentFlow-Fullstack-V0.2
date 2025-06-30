@@ -8,30 +8,89 @@ const mapsClient = new GoogleMapsClient(process.env.GOOGLE_MAPS_API_KEY);
 // IMPORTANT: Handles commute time and place details logic
 // TODO: Add caching for frequent commute queries
 
+/**
+ * Get commute time and distance using OpenRouteService and Nominatim
+ */
 exports.getCommuteTime = async (req, res) => {
   try {
-    const { apartmentId, destination, mode = 'driving' } = req.body;
+    const { apartmentId, destination, lat, lon, mode = 'driving' } = req.body;
+    const hereApiKey = process.env.HERE_API_KEY;
+    if (!hereApiKey) {
+      return res.status(500).json({ error: 'HERE API key not configured' });
+    }
 
     // Get apartment location
     const apartment = await Apartment.findById(apartmentId);
-    if (!apartment) {
-      return res.status(404).json({ error: 'Apartment not found' });
+    if (!apartment || !apartment.location || !apartment.location.coordinates) {
+      return res.status(404).json({ error: 'Apartment location not found' });
+    }
+    const [originLng, originLat] = apartment.location.coordinates;
+
+    // Get destination coordinates
+    let destLatNum, destLngNum, destinationDisplayName;
+    if (lat && lon) {
+      destLatNum = parseFloat(lat);
+      destLngNum = parseFloat(lon);
+      destinationDisplayName = destination;
+    } else {
+      // Use HERE Geocoding API
+      const geoRes = await axios.get(`https://geocode.search.hereapi.com/v1/geocode`, {
+        params: { q: destination, apiKey: hereApiKey, limit: 1 },
+      });
+      if (!geoRes.data.items || geoRes.data.items.length === 0) {
+        return res.status(404).json({ error: 'Destination address not found' });
+      }
+      destLatNum = geoRes.data.items[0].position.lat;
+      destLngNum = geoRes.data.items[0].position.lng;
+      destinationDisplayName = geoRes.data.items[0].address.label;
     }
 
-    const origin = `${apartment.location.coordinates[1]},${apartment.location.coordinates[0]}`;
+    // Map mode to HERE transportMode
+    const modeMap = {
+      driving: 'car',
+      walking: 'pedestrian',
+      bicycling: 'bicycle',
+      cycling: 'bicycle',
+    };
+    const transportMode = modeMap[mode] || 'car';
 
-    // Get commute time
-    const commuteInfo = await mapsClient.getCommuteTime(origin, destination, mode);
+    // Call HERE Routing API
+    const routingUrl = `https://router.hereapi.com/v8/routes`;
+    const routingRes = await axios.get(routingUrl, {
+      params: {
+        apiKey: hereApiKey,
+        origin: `${originLat},${originLng}`,
+        destination: `${destLatNum},${destLngNum}`,
+        transportMode,
+        return: 'summary',
+      },
+    });
 
+    if (!routingRes.data.routes || routingRes.data.routes.length === 0) {
+      return res.status(404).json({ error: 'No route found between origin and destination' });
+    }
+
+    const summary = routingRes.data.routes[0].sections[0].summary;
     res.json({
       success: true,
-      data: commuteInfo,
+      data: {
+        distance: {
+          value: summary.length,
+          text: `${(summary.length / 1000).toFixed(2)} km`,
+        },
+        duration: {
+          value: summary.duration,
+          text: `${(summary.duration / 60).toFixed(1)} min`,
+        },
+        mode: transportMode,
+        destination: destinationDisplayName,
+      },
     });
   } catch (error) {
-    console.error('Error getting commute time:', error);
+    console.error('Error getting commute time:', error.response?.data || error.message);
     res.status(500).json({
       error: 'Error getting commute time',
-      details: error.message,
+      details: error.response?.data || error.message,
     });
   }
 };
@@ -94,12 +153,12 @@ exports.getPlaceDetails = async (req, res) => {
  */
 exports.getAddressSuggestions = async (req, res) => {
   try {
-    const { query } = req.query;
-    if (!query) {
+    const { q } = req.query;
+    if (!q) {
       return res.status(400).json({ error: 'Query parameter is required' });
     }
 
-    console.log('Searching for address:', query);
+    console.log('Searching for address:', q);
 
     // Create a custom HTTPS agent that's more lenient with SSL validation
     const httpsAgent = new https.Agent({
@@ -108,7 +167,7 @@ exports.getAddressSuggestions = async (req, res) => {
 
     const response = await axios.get('https://nominatim.openstreetmap.org/search', {
       params: {
-        q: query,
+        q: q,
         format: 'json',
         limit: 5,
         addressdetails: 1,

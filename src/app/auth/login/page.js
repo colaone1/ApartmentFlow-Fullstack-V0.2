@@ -10,28 +10,32 @@ import Button from '../../components/Button';
 import Link from 'next/link';
 
 export default function Login() {
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
 
   function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
     setError('');
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.email || !form.password) {
+    if (!formData.email || !formData.password) {
       setError('You must fill in both email and password to continue.');
       return;
     }
     setLoading(true);
     try {
       // eslint-disable-next-line no-console
-      console.log('Login attempt for:', form.email);
-      await login(form.email, form.password);
+      console.log('Login attempt for:', formData.email);
+      await login(formData.email, formData.password);
       router.push('/listings');
     } catch (error) {
       setError('Invalid email or password');
@@ -48,7 +52,7 @@ export default function Login() {
           label="Email"
           type="email"
           name="email"
-          value={form.email}
+          value={formData.email}
           onChange={handleChange}
           placeholder="name@example.com"
           required
@@ -57,7 +61,7 @@ export default function Login() {
           label="Password"
           type="password"
           name="password"
-          value={form.password}
+          value={formData.password}
           onChange={handleChange}
           placeholder="••••••••"
           required

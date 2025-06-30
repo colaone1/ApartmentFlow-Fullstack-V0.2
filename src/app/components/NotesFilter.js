@@ -1,6 +1,9 @@
-"use client";
+'use client';
 
-const NotesFilter = ({ filters = { search: '', category: 'all', priority: 'all', sortBy: 'newest' }, onFilterChange = () => {} }) => {
+const NotesFilter = ({
+  filters = { search: '', category: 'all', priority: 'all', sortBy: 'newest' },
+  onFilterChange = () => {},
+}) => {
   const { search, category, priority, sortBy } = filters;
 
   const handleChange = (key, value) => {
@@ -12,16 +15,20 @@ const NotesFilter = ({ filters = { search: '', category: 'all', priority: 'all',
       search: '',
       category: 'all',
       priority: 'all',
-      sortBy: 'newest'
+      sortBy: 'newest',
     });
   };
 
   return (
     <div className="bg-gray-50 rounded-lg p-4 mb-6">
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col md:flex-row md:flex-wrap gap-4 items-end">
         {/* Search */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-[200px] mb-2 md:mb-0">
+          <label htmlFor="notes-search" className="block text-sm font-medium text-gray-700 mb-1">
+            Search Notes
+          </label>
           <input
+            id="notes-search"
             type="text"
             placeholder="Search notes..."
             value={search}
@@ -76,15 +83,17 @@ const NotesFilter = ({ filters = { search: '', category: 'all', priority: 'all',
         </div>
 
         {/* Clear Filters */}
-        <button
-          onClick={clearFilters}
-          className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors whitespace-nowrap"
-        >
-          Clear Filters
-        </button>
+        <div className="w-full md:w-auto">
+          <button
+            onClick={clearFilters}
+            className="w-full md:w-auto px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors whitespace-nowrap mt-2 md:mt-0"
+          >
+            Clear Filters
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
-export default NotesFilter; 
+export default NotesFilter;
