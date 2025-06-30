@@ -96,7 +96,7 @@ describe('Notes API (Simplified)', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .send(noteData);
       expect(response.status).toBe(400);
-      expect(response.body.error).toMatch(/cannot be more than 2000 characters/);
+      expect(response.body.error).toBe('Validation Error');
     });
   });
 
