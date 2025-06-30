@@ -223,3 +223,20 @@ The combination of:
 Positions you for the **highest possible grade**.
 
 **Complete the final ESLint cleanup and test fixes and you'll have an A+ project!** 🎯
+
+# TODO / Next Session
+
+## 1. Private Listings Visibility
+
+- Add a toggle or filter on the listings page (or a dedicated 'My Listings' page) to show private listings created by the logged-in user.
+- Ensure the backend API supports fetching a user's private listings.
+
+## 2. Commute Feature on Listing Details
+
+- Add a commute input section to the apartment details page to allow users to enter an address and see the distance/time from the listing's location.
+- Use the backend or Google Maps API to calculate and display the commute distance/time.
+
+## 3. Notes Feature (Retest & Polish)
+
+- Test adding, editing, deleting, and filtering notes on listings.
+- Fix any issues found during testing.

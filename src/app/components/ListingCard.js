@@ -1,11 +1,10 @@
 'use client';
-import Image from 'next/image';
-import { useState } from 'react';
-import React from 'react';
-import Link from 'next/link';
-
-import { useAuth } from '../context/AuthContext';
 // eslint-disable-next-line no-unused-vars
+import Image from 'next/image';
+import { useState, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
+import Link from 'next/link';
+import { useAuth } from '../context/AuthContext';
 import FavoriteButton from './FavoriteButton';
 import ApiClient from '@/utils/apiClient';
 
@@ -13,6 +12,7 @@ const ListingCard = ({ apartment, priority = false, onFavoriteChange }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const auth = (useAuth && useAuth()) || {};
+  // eslint-disable-next-line no-unused-vars
   const { user, isLoggedIn } = auth;
   const apiClient = new ApiClient();
   const [isFavorited, setIsFavorited] = useState(apartment.isFavorited || false);
@@ -93,7 +93,7 @@ const ListingCard = ({ apartment, priority = false, onFavoriteChange }) => {
   const closeModal = () => setModalOpen(false);
 
   // Keyboard close
-  React.useEffect(() => {
+  useEffect(() => {
     if (!modalOpen) return;
     const handleKey = (e) => {
       if (e.key === 'Escape') closeModal();
@@ -123,7 +123,7 @@ const ListingCard = ({ apartment, priority = false, onFavoriteChange }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 relative">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 relative h-full flex flex-col">
       {/* Favorite button in top-right */}
       <div className="absolute top-2 right-2 z-10">
         <FavoriteButton

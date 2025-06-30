@@ -104,20 +104,25 @@ export default function ApartmentDetailPage() {
   const handleAddNote = async (e) => {
     e.preventDefault();
     try {
-      // eslint-disable-next-line no-console
-      console.log('Adding note:', newNote);
       const apiClient = new ApiClient();
-      const response = await apiClient.createNote({
+      await apiClient.createNote({
         apartmentId: params.id,
         ...newNote,
       });
 
-      setNotes([...notes, response.data]);
+      // Re-fetch notes after adding
+      const notesResponse = await apiClient.getNotes({ apartmentId: params.id });
+      const notesArr = Array.isArray(notesResponse.data?.data)
+        ? notesResponse.data.data
+        : Array.isArray(notesResponse.data)
+        ? notesResponse.data
+        : [];
+      setNotes(notesArr);
+
       setNewNote({ title: '', content: '', category: 'general', priority: 'medium' });
       setShowNoteForm(false);
       setMessage('Note added successfully!');
 
-      // Clear message after 3 seconds
       setTimeout(() => setMessage(''), 3000);
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -578,9 +583,9 @@ export default function ApartmentDetailPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {filteredAndSortedNotes.map((note) => (
+                  {filteredAndSortedNotes.map((note, index) => (
                     <NoteCard
-                      key={note._id || note.id || note.title}
+                      key={note._id || `temp-${index}`}
                       note={note}
                       onEdit={handleEditNote}
                       onDelete={handleDeleteNote}

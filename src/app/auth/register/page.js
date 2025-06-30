@@ -1,35 +1,38 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/app/context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
+// eslint-disable-next-line no-unused-vars
 import ApiClient from '@/utils/apiClient';
 
 export default function Register() {
-  const [registrationForm, setRegistrationForm] = useState({
+  const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
   });
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { register } = useAuth();
 
   function handleChange(e) {
-    setRegistrationForm({ ...registrationForm, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
     setError('');
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!registrationForm.name || !registrationForm.email || !registrationForm.password) {
+    if (!formData.name || !formData.email || !formData.password) {
       setError('All fields must be completed before submitting.');
       return;
     }
     setLoading(true);
     setError('');
 
-    if (registrationForm.password !== registrationForm.confirmPassword) {
+    if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
       return;
@@ -37,8 +40,8 @@ export default function Register() {
 
     try {
       // eslint-disable-next-line no-console
-      console.log('Registration attempt for:', registrationForm.email);
-      await register(registrationForm.name, registrationForm.email, registrationForm.password);
+      console.log('Registration attempt for:', formData.email);
+      await register(formData.name, formData.email, formData.password);
       router.push('/listings');
     } catch (error) {
       setError('Registration failed. Please try again.');
@@ -56,7 +59,7 @@ export default function Register() {
           <input
             type="text"
             name="name"
-            value={registrationForm.name}
+            value={formData.name}
             onChange={handleChange}
             className="w-full p-2 border rounded"
             required
@@ -67,7 +70,7 @@ export default function Register() {
           <input
             type="email"
             name="email"
-            value={registrationForm.email}
+            value={formData.email}
             onChange={handleChange}
             className="w-full p-2 border rounded"
             required
@@ -78,7 +81,7 @@ export default function Register() {
           <input
             type="password"
             name="password"
-            value={registrationForm.password}
+            value={formData.password}
             onChange={handleChange}
             className="w-full p-2 border rounded"
             required
@@ -89,7 +92,7 @@ export default function Register() {
           <input
             type="password"
             name="confirmPassword"
-            value={registrationForm.confirmPassword}
+            value={formData.confirmPassword}
             onChange={handleChange}
             className="w-full p-2 border rounded"
             required

@@ -7,7 +7,8 @@ import SearchBar from '../components/SearchBar';
 // eslint-disable-next-line no-unused-vars
 import ListingCard from '../components/ListingCard';
 import ApiClient from '@/utils/apiClient';
-// import Sidebar from '../components/Sidebar'; // Remove this line if not needed
+// eslint-disable-next-line no-unused-vars
+import Sidebar from '../components/Sidebar';
 
 export default function ListingsPage() {
   const [search, setSearch] = useState('');
@@ -18,8 +19,8 @@ export default function ListingsPage() {
   const [pages, setPages] = useState(1);
   const [limit] = useState(6);
 
-  // Add filter state
-  const [filters] = useState({
+  // Add filter state - make it mutable
+  const [filters, setFilters] = useState({
     minPrice: 0,
     maxPrice: 3000,
     bedrooms: 0,
@@ -47,6 +48,8 @@ export default function ListingsPage() {
         }
         setPages(response.data.pages);
       } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Error fetching apartments:', err);
         setError(
           err.response?.data?.message || 'Failed to fetch apartments. Please try again later.'
         );
@@ -54,7 +57,11 @@ export default function ListingsPage() {
         setLoading(false);
       }
     };
-    fetchFlats();
+
+    // Only fetch if we're on the client side
+    if (typeof window !== 'undefined') {
+      fetchFlats();
+    }
   }, [page, limit, filters]);
 
   // Filter on client side as well
@@ -92,50 +99,56 @@ export default function ListingsPage() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-      <div className="md:col-span-1">
-        {/* <Sidebar filters={filters} onFilterChange={setFilters} /> */}
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
+      {/* Filter Sidebar */}
+      <div className="lg:w-64 lg:flex-shrink-0">
+        <Sidebar filters={filters} onFilterChange={setFilters} />
       </div>
-      <div className="md:col-span-3">
-        <div className="flex">
-          <div className="flex-1 p-6 ">
-            <div className="ml-5 md:ml-25">
-              <h1 className="text-3xl font-bold mb-2 ">Apartment Listings</h1>
-              <p className="mb-6">Here you can browse all available apartments.</p>
 
-              <SearchBar value={search} onChange={(e) => setSearch(e.target.value)} />
+      {/* Main Content */}
+      <div className="flex-1">
+        <div className="p-4 lg:p-6">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold mb-2">Apartment Listings</h1>
+            <p className="mb-6">Here you can browse all available apartments.</p>
+
+            <SearchBar value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+
+          {filteredFlats.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 dark:text-gray-400 text-lg">No apartments found.</p>
             </div>
-            <>
-              {filteredFlats.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-600 dark:text-gray-400 text-lg">No apartments found.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredFlats.map((flat, index) => (
+                <div key={flat._id || index} className="h-full">
+                  <ListingCard apartment={flat} priority={index < 3} />
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 max-w-5xl mx-auto px-2">
-                  {filteredFlats.map((flat, index) => {
-                    // console.log(`Data passed to ListingCard for "${flat.title}":`, { images: flat.images }); // Removed for ESLint
-
-                    return <ListingCard key={index} apartment={flat} priority={index < 3} />;
-                  })}
-                </div>
-              )}
-            </>
-            <div className="pagination-controls flex justify-between mt-5">
-              <button disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-                « Prev
-              </button>
-
-              <span className="mt-2">
-                Page {page} of {pages}
-              </span>
-
-              <button
-                disabled={page === pages}
-                onClick={() => setPage((p) => Math.min(pages, p + 1))}
-              >
-                Next »
-              </button>
+              ))}
             </div>
+          )}
+
+          <div className="pagination-controls flex justify-between items-center mt-8">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              « Prev
+            </button>
+
+            <span className="text-gray-600">
+              Page {page} of {pages}
+            </span>
+
+            <button
+              disabled={page === pages}
+              onClick={() => setPage((p) => Math.min(pages, p + 1))}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              Next »
+            </button>
           </div>
         </div>
       </div>

@@ -1395,3 +1395,11 @@ npm test -- --testNamePattern="should create"
 
 _Last Updated: December 2024_
 _Part of the Apartment Search Project Troubleshooting Suite_
+
+---
+
+## Upcoming Features & Testing Focus (Next Session)
+
+- **Private Listings Visibility:** Implement a toggle/filter or 'My Listings' page for users to view their private listings. Ensure backend API supports this.
+- **Commute Feature:** Add commute calculation (distance/time from listing to entered address) on apartment details pages.
+- **Notes Feature:** Retest and polish notes functionality (add, edit, delete, filter) and fix any issues found.

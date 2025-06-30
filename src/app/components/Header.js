@@ -1,9 +1,14 @@
 'use client';
+// eslint-disable-next-line no-unused-vars
 import Link from 'next/link';
+// eslint-disable-next-line no-unused-vars
 import Image from 'next/image';
+// eslint-disable-next-line no-unused-vars
 import Dropdown from './Dropdown';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+// eslint-disable-next-line no-unused-vars
+import { useAuth as useAuthHook } from '../context/AuthContext';
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);

@@ -238,30 +238,7 @@ export default function ApartmentAdd() {
       setLoading(false);
     }
   };
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === 'images') {
-      // Accept up to 8 images
-      const selectedFiles = Array.from(files).slice(0, 8);
-      setImageFiles(selectedFiles);
-      setImages(selectedFiles.map((file) => URL.createObjectURL(file)));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
-    }
-  };
-  const removeImage = (index) => {
-    // eslint-disable-next-line no-console
-    console.log('Removing image at index:', index);
 
-    const newFiles = imageFiles.filter((_, i) => i !== index);
-    const newPreviews = images.filter((_, i) => i !== index);
-
-    setImageFiles(newFiles);
-    setImages(newPreviews);
-  };
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
@@ -273,17 +250,7 @@ export default function ApartmentAdd() {
       [name]: value,
     }));
   };
-  const handleSelectChange = (e) => {
-    const { name, value } = e.target;
 
-    // eslint-disable-next-line no-console
-    console.log('Select change:', name, value);
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
 
