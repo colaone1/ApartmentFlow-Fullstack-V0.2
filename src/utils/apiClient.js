@@ -306,6 +306,21 @@ export class ApiClient {
     );
     return response;
   }
+
+  // Fetch notes for a specific apartment
+  async getNotesForApartment(apartmentId) {
+    return this.apiCall('get', `/notes/apartment/${apartmentId}`);
+  }
+
+  // Get neighborhood rating (average and user) for an apartment
+  async getNeighborhoodRating(apartmentId) {
+    return this.apiCall('get', `/ratings/apartment/${apartmentId}`);
+  }
+
+  // Set (add/update) your neighborhood rating for an apartment
+  async setNeighborhoodRating(apartmentId, rating) {
+    return this.apiCall('post', '/ratings', { apartmentId, rating });
+  }
 }
 
 // AI-OPTIMIZED: Export singleton instance for consistent usage
