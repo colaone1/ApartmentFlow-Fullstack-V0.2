@@ -167,7 +167,7 @@ export class ApiClient {
 
   // AI-OPTIMIZED: Authentication methods
   async login(email, password) {
-    const response = await this.apiCall('post', '/auth/login', { email, password });
+    const response = await this.apiCall('post', '/api/auth/login', { email, password });
 
     if (response.data && response.data.token) {
       this.setToken(response.data.token);
@@ -181,7 +181,7 @@ export class ApiClient {
     const token = this.getToken();
     try {
       if (token) {
-        await this.apiCall('post', '/auth/logout', { token });
+        await this.apiCall('post', '/api/auth/logout', { token });
       }
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -195,7 +195,7 @@ export class ApiClient {
   }
 
   async register(name, email, password) {
-    const response = await this.apiCall('post', '/auth/register', { name, email, password });
+    const response = await this.apiCall('post', '/api/auth/register', { name, email, password });
 
     if (response.data && response.data.token) {
       this.setToken(response.data.token);
@@ -207,7 +207,7 @@ export class ApiClient {
 
   // AI-OPTIMIZED: User profile methods
   async getUser() {
-    const response = await this.apiCall('get', '/users/profile');
+    const response = await this.apiCall('get', '/api/users/profile');
     return response.data;
   }
 
@@ -216,18 +216,18 @@ export class ApiClient {
   }
 
   async updateProfile(data) {
-    const response = await this.apiCall('put', '/users/profile', data);
+    const response = await this.apiCall('put', '/api/users/profile', data);
     return response.data;
   }
 
   async removeProfile() {
-    const response = await this.apiCall('delete', '/users/profile');
+    const response = await this.apiCall('delete', '/api/users/profile');
     return response.data;
   }
 
   // AI-OPTIMIZED: Apartment methods with caching hints
   async createApartment(formData) {
-    return this.apiCall('post', '/apartments', formData, {
+    return this.apiCall('post', '/api/apartments', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -237,52 +237,52 @@ export class ApiClient {
   async getApartments(page = 1, limit = 6, filters = {}) {
     const params = { page, limit, ...filters };
     const queryString = new URLSearchParams(params).toString();
-    const endpoint = '/apartments' + (queryString ? `?${queryString}` : '');
+    const endpoint = '/api/apartments' + (queryString ? `?${queryString}` : '');
     const response = await this.apiCall('get', endpoint);
     return response;
   }
 
   async getApartment(id) {
-    const response = await this.apiCall('get', `/apartments/${id}`);
+    const response = await this.apiCall('get', `/api/apartments/${id}`);
     return response;
   }
 
   // AI-OPTIMIZED: Notes API methods
   async getNotes(filters = {}) {
     const params = new URLSearchParams(filters).toString();
-    const endpoint = '/notes' + (params ? `?${params}` : '');
+    const endpoint = '/api/notes' + (params ? `?${params}` : '');
     const response = await this.apiCall('get', endpoint);
     return response;
   }
 
   async createNote(noteData) {
-    const response = await this.apiCall('post', '/notes', noteData);
+    const response = await this.apiCall('post', '/api/notes', noteData);
     return response;
   }
 
   async updateNote(noteId, noteData) {
-    const response = await this.apiCall('put', `/notes/${noteId}`, noteData);
+    const response = await this.apiCall('put', `/api/notes/${noteId}`, noteData);
     return response;
   }
 
   async deleteNote(noteId) {
-    const response = await this.apiCall('delete', `/notes/${noteId}`);
+    const response = await this.apiCall('delete', `/api/notes/${noteId}`);
     return response;
   }
 
   // AI-OPTIMIZED: Favorites API methods
   async getFavorites() {
-    const response = await this.apiCall('get', '/favorites');
+    const response = await this.apiCall('get', '/api/favorites');
     return response;
   }
 
   async addFavorite(apartmentId) {
-    const response = await this.apiCall('post', '/favorites', { apartmentId });
+    const response = await this.apiCall('post', '/api/favorites', { apartmentId });
     return response;
   }
 
   async removeFavorite(apartmentId) {
-    const response = await this.apiCall('delete', `/favorites/${apartmentId}`);
+    const response = await this.apiCall('delete', `/api/favorites/${apartmentId}`);
     return response;
   }
 
@@ -293,31 +293,31 @@ export class ApiClient {
       lat && lon
         ? { apartmentId, destination, lat, lon, mode }
         : { apartmentId, destination, mode };
-    const response = await this.apiCall('post', '/commute', body);
+    const response = await this.apiCall('post', '/api/commute', body);
     return response.data;
   }
 
   async getAddressSuggestions(query) {
     const response = await this.apiCall(
       'get',
-      `/commute/suggestions?q=${encodeURIComponent(query)}`
+      `/api/commute/suggestions?q=${encodeURIComponent(query)}`
     );
     return response;
   }
 
   // Fetch notes for a specific apartment
   async getNotesForApartment(apartmentId) {
-    return this.apiCall('get', `/notes/apartment/${apartmentId}`);
+    return this.apiCall('get', `/api/notes/apartment/${apartmentId}`);
   }
 
   // Get neighborhood rating (average and user) for an apartment
   async getNeighborhoodRating(apartmentId) {
-    return this.apiCall('get', `/ratings/apartment/${apartmentId}`);
+    return this.apiCall('get', `/api/ratings/apartment/${apartmentId}`);
   }
 
   // Set (add/update) your neighborhood rating for an apartment
   async setNeighborhoodRating(apartmentId, rating) {
-    return this.apiCall('post', '/ratings', { apartmentId, rating });
+    return this.apiCall('post', '/api/ratings', { apartmentId, rating });
   }
 }
 
