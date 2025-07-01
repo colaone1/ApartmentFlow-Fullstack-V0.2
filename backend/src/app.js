@@ -45,6 +45,7 @@ require('dotenv').config();
 console.log('MONGODB_URI:', process.env.MONGODB_URI);
 
 const app = (module.exports = express());
+app.set('trust proxy', 1); // trust first proxy for correct client IP behind Render
 
 /**
  * AI-OPTIMIZED: Error creation utility
