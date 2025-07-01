@@ -157,6 +157,7 @@ const ListingCard = ({ apartment, priority = false, isFavorited = false, onToggl
             src={imageUrl}
             alt={`Image of ${title}`}
             fill
+            unoptimized
             style={{ objectFit: 'cover' }}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             priority={priority}
