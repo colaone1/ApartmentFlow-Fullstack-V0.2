@@ -39,12 +39,18 @@ const ListingCard = ({ apartment, priority = false, isFavorited = false, onToggl
   if (images && images.length > 0) {
     const mainImage = images.find((img) => img && img.isMain) || images[0];
     if (mainImage && mainImage.url && mainImage.url.trim() !== '') {
-      const cleanUrl = mainImage.url.replace(/\\/g, '/').replace(/^\//, '');
-      imageUrl = `${backendUrl}/${cleanUrl}`;
+      if (mainImage.url.startsWith('http://') || mainImage.url.startsWith('https://')) {
+        imageUrl = mainImage.url;
+      } else {
+        const cleanUrl = mainImage.url.replace(/\\/g, '/').replace(/^\//, '');
+        imageUrl = `${backendUrl}/${cleanUrl}`;
+      }
     }
     allImageUrls = images.map((img) =>
       img.url && img.url.trim() !== ''
-        ? `${backendUrl}/${img.url.replace(/\\/g, '/').replace(/^\//, '')}`
+        ? img.url.startsWith('http://') || img.url.startsWith('https://')
+          ? img.url
+          : `${backendUrl}/${img.url.replace(/\\/g, '/').replace(/^\//, '')}`
         : '/default-image.png'
     );
   }
