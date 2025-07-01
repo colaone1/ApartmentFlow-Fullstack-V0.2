@@ -19,6 +19,7 @@
     "performance:monitor": "node scripts/performance-monitor.js",
     "cache:stats": "node scripts/cache-stats.js",
     "db:optimize": "node mongodb-optimize.js",
+    "migrate:fix-images": "node scripts/fix-image-urls.js",
     "memory:profile": "node --inspect src/app.js",
     "load:test": "artillery run scripts/load-test.yml"
   },

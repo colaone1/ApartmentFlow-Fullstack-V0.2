@@ -193,13 +193,36 @@ const createApartment = async (req, res, next) => {
       images: [], // Initialize images as an empty array
     };
 
-    // If files were uploaded, add their paths to the apartment data
+    // If files were uploaded, upload them to Cloudinary and add their URLs to the apartment data
     if (req.files && req.files.length > 0) {
-      apartmentData.images = req.files.map((file, index) => ({
-        url: `uploads/${file.filename}`,
-        publicId: file.filename, // Using filename as publicId for now
-        isMain: index === 0, // First image is main image
-      }));
+      const cloudinary = require('../config/cloudinary');
+      const uploadedImages = [];
+
+      // Process each uploaded file
+      for (const file of req.files) {
+        try {
+          // Upload to Cloudinary
+          const result = await cloudinary.uploader.upload(file.path, {
+            folder: 'apartments',
+            use_filename: true,
+            unique_filename: true,
+            overwrite: false,
+            resource_type: 'image',
+            transformation: [{ width: 800, height: 600, crop: 'limit' }, { quality: 'auto:good' }],
+          });
+
+          uploadedImages.push({
+            url: result.secure_url,
+            publicId: result.public_id,
+            isMain: uploadedImages.length === 0, // First image is main image
+          });
+        } catch (uploadError) {
+          console.error(`Failed to upload ${file.originalname}:`, uploadError);
+          // Continue with other images even if one fails
+        }
+      }
+
+      apartmentData.images = uploadedImages;
     }
 
     // If this is an external listing, ensure we have the source information

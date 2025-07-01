@@ -42,7 +42,14 @@ export default function Register() {
       await register(formData.name, formData.email, formData.password);
       router.push('/listings');
     } catch (error) {
-      setError('Registration failed. Please try again.');
+      // Try to extract backend error message
+      let msg = 'Registration failed. Please try again.';
+      if (error?.response?.data?.message) {
+        msg = error.response.data.message;
+      } else if (error?.message) {
+        msg = error.message;
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
