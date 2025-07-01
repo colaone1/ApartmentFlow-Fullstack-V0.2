@@ -117,10 +117,16 @@ app.use(
   })
 );
 
+const allowedOrigins = [
+  'https://apartment-flow-fullstack-v0-2.vercel.app',
+  'https://apartment-flow-fullstack-v0-2-jxcm6fpbz-sams-projects-88a29ea6.vercel.app', // preview branch
+  'http://localhost:3000',
+];
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || origin === 'http://localhost:3000' || origin.endsWith('.vercel.app')) {
+      if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
