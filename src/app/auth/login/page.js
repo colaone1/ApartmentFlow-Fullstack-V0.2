@@ -36,7 +36,17 @@ export default function Login() {
       await login(formData.email, formData.password);
       router.push('/listings');
     } catch (error) {
-      setError('Invalid email or password');
+      if (error.message && error.message.toLowerCase().includes('timeout')) {
+        setError(
+          'Login timed out. The server may be waking up. Please try again in a few seconds.'
+        );
+      } else if (error.response && error.response.status === 401) {
+        setError('Invalid email or password');
+      } else if (error.message && error.message.toLowerCase().includes('network')) {
+        setError('Network error. Please check your connection or try again later.');
+      } else {
+        setError('Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
