@@ -119,12 +119,13 @@ app.use(
 
 app.use(
   cors({
-    // AI-OPTIMIZED: Optimized CORS for better performance
-    origin: [
-      'http://localhost:3000', // Local development
-      'https://apartment-flow-fullstack-v0-2.vercel.app', // Vercel frontend
-      ...(process.env.ALLOWED_ORIGINS?.split(',') || []), // Additional origins from env
-    ],
+    origin: (origin, callback) => {
+      if (!origin || origin === 'http://localhost:3000' || origin.endsWith('.vercel.app')) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     maxAge: 86400, // Cache preflight requests for 24 hours
   })
