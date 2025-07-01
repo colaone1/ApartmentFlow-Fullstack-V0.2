@@ -121,6 +121,7 @@ app.use(
 const allowedOrigins = [
   'https://apartment-flow-fullstack-v0-2.vercel.app',
   'https://apartment-flow-fullstack-v0-2-jxcm6fpbz-sams-projects-88a29ea6.vercel.app', // preview branch
+  'https://apartment-flow-fullstack-v0-2-1cf1psn8g-sams-projects-88a29ea6.vercel.app', // new preview branch (add more as needed)
   'http://localhost:3000',
 ];
 
