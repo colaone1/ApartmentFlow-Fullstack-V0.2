@@ -232,6 +232,8 @@ const createApartment = async (req, res, next) => {
         apartmentData.externalId || apartmentData.sourceUrl.split('/').pop().split('#')[0];
     }
 
+    // Debug: Log the images array before saving
+    console.log('Saving apartment with images:', apartmentData.images);
     const apartment = await Apartment.create(apartmentData);
 
     const populatedApartment = await Apartment.findById(apartment._id).populate(
@@ -362,10 +364,10 @@ const autofillListingFromUrl = async (req, res) => {
         amenities: $('.property-features li')
           .map((i, el) => $(el).text().trim())
           .get(),
-        images: $('.property-gallery img')
-          .map((i, el) => $(el).attr('src'))
-          .get()
-          .slice(0, 4),
+        // images: $('.property-gallery img')
+        //   .map((i, el) => $(el).attr('src'))
+        //   .get()
+        //   .slice(0, 4), // COMMENTED OUT: Scraped images disabled for now
       };
     } else if (sourceType === 'zoopla') {
       extractedData = {
@@ -379,10 +381,10 @@ const autofillListingFromUrl = async (req, res) => {
         amenities: $('.listing-features li')
           .map((i, el) => $(el).text().trim())
           .get(),
-        images: $('.listing-gallery img')
-          .map((i, el) => $(el).attr('src'))
-          .get()
-          .slice(0, 4),
+        // images: $('.listing-gallery img')
+        //   .map((i, el) => $(el).attr('src'))
+        //   .get()
+        //   .slice(0, 4), // COMMENTED OUT: Scraped images disabled for now
       };
     } else {
       // Generic extraction for other sites
@@ -398,14 +400,14 @@ const autofillListingFromUrl = async (req, res) => {
         amenities: $('[itemprop="amenityFeature"], .amenities li, .features li')
           .map((i, el) => $(el).text().trim())
           .get(),
-        images: $('img')
-          .map((i, el) => {
-            const src = $(el).attr('src');
-            return src && src.startsWith('http') ? src : null;
-          })
-          .get()
-          .filter(Boolean)
-          .slice(0, 4),
+        // images: $('img')
+        //   .map((i, el) => {
+        //     const src = $(el).attr('src');
+        //     return src && src.startsWith('http') ? src : null;
+        //   })
+        //   .get()
+        //   .filter(Boolean)
+        //   .slice(0, 4), // COMMENTED OUT: Scraped images disabled for now
       };
     }
 
