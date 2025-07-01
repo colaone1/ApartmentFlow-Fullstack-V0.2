@@ -20,7 +20,6 @@
 
 // Core dependencies
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -42,8 +41,6 @@ const {
 
 require('dotenv').config();
 
-console.log('MONGODB_URI:', process.env.MONGODB_URI);
-
 const app = (module.exports = express());
 app.set('trust proxy', 1); // trust first proxy for correct client IP behind Render
 
@@ -51,11 +48,6 @@ app.set('trust proxy', 1); // trust first proxy for correct client IP behind Ren
  * AI-OPTIMIZED: Error creation utility
  * Creates errors with status codes for consistent error handling
  */
-function error(status, msg) {
-  const err = new Error(msg);
-  err.status = status;
-  return err;
-}
 
 /**
  * AI-OPTIMIZED: Database Connection Setup
@@ -63,16 +55,12 @@ function error(status, msg) {
  * SKIPPED in test environment for faster test execution
  */
 if (process.env.NODE_ENV !== 'test') {
-  connectDB()
-    .then(() => {
-      // AI-OPTIMIZED: Setup query optimization hooks
-      optimizeQueries();
-      // AI-OPTIMIZED: Setup connection event handlers
-      setupConnectionHandlers();
-    })
-    .catch((err) => {
-      process.exit(1);
-    });
+  connectDB().then(() => {
+    // AI-OPTIMIZED: Setup query optimization hooks
+    optimizeQueries();
+    // AI-OPTIMIZED: Setup connection event handlers
+    setupConnectionHandlers();
+  });
 }
 
 /**
@@ -118,21 +106,20 @@ app.use(
   })
 );
 
-const allowedOrigins = [
-  'https://apartment-flow-fullstack-v0-2.vercel.app',
-  'https://apartment-flow-fullstack-v0-2-jxcm6fpbz-sams-projects-88a29ea6.vercel.app', // preview branch
-  'https://apartment-flow-fullstack-v0-2-1cf1psn8g-sams-projects-88a29ea6.vercel.app', // new preview branch (add more as needed)
-  'http://localhost:3000',
-];
+const allowedOrigins = ['http://localhost:3000'];
 
 app.use(
   cors({
     origin: (origin, callback) => {
+      // Allow localhost for local dev
       if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
+        return callback(null, true);
       }
+      // Allow all Vercel preview and production URLs
+      if (/^https:\/\/[\w-]+\.vercel\.app$/.test(origin)) {
+        return callback(null, true);
+      }
+      callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
     maxAge: 86400, // Cache preflight requests for 24 hours
@@ -155,9 +142,6 @@ if (process.env.NODE_ENV === 'development' || process.env.ENABLE_LOGGING === 'tr
   app.use(
     morgan('combined', {
       skip: (req, res) => res.statusCode < 400, // Only log errors in production
-      stream: {
-        write: (message) => console.log(message.trim()),
-      },
     })
   );
 }
@@ -303,11 +287,6 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
  * - General server errors
  */
 app.use(function (err, req, res, next) {
-  // AI-OPTIMIZED: Log error for debugging (but not in test mode for expected errors)
-  if (process.env.NODE_ENV !== 'test' || !err.code) {
-    console.error(err.stack);
-  }
-
   // AI-OPTIMIZED: Handle mongoose validation errors
   if (err.name === 'ValidationError') {
     return res.status(400).json({
