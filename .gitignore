@@ -101,7 +101,7 @@ backend/uploads/
 *.sql
 
 # Ignore all markdown files by default
-*.md
+# *.md
 
 # But do NOT ignore these essential files for marking
 !README.md
